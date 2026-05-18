@@ -14,14 +14,30 @@ const (
 )
 
 type UnitEvents struct {
+	Type       string `yaml:"type"`
 	Name       string `yaml:"name"`
 	ParentPath string `yaml:"parentPath"`
+	UnitPath   string `yaml:"unitPath"`
+}
+
+func (u *UnitEvents) SetUnitType(t string) {
+	u.Type = t
+}
+
+func (u *UnitEvents) SetUnitName() {
+	u.Name = UNIT_NAME
 }
 
 func (u *UnitEvents) SetParentDir(pth string) {
 	u.ParentPath = pth
 }
 
+// Used with loaders
+func (u *UnitEvents) SetUnitDir() {
+	u.UnitPath = u.UnitDir()
+}
+
+// returns current unit dir
 func (u UnitEvents) UnitDir() string {
 	return path.Join(u.ParentPath, UNIT_NAME)
 }

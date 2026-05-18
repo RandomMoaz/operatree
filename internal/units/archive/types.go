@@ -16,12 +16,27 @@ var (
 )
 
 type UnitArchive struct {
+	Type       string `yaml:"type"`
 	Name       string `yaml:"name"`
 	ParentPath string `yaml:"parentPath"`
+	UnitPath   string `yaml:"unitPath"`
+}
+
+func (u *UnitArchive) SetUnitType(t string) {
+	u.Type = t
+}
+
+func (u *UnitArchive) SetUnitName() {
+	u.Name = UNIT_NAME
 }
 
 func (u *UnitArchive) SetParentDir(pth string) {
 	u.ParentPath = pth
+}
+
+// Used with loaders
+func (u *UnitArchive) SetUnitDir() {
+	u.UnitPath = u.UnitDir()
 }
 
 func (u UnitArchive) UnitDir() string {

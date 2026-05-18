@@ -22,12 +22,27 @@ var (
 )
 
 type UnitLegal struct {
+	Type       string `yaml:"type"`
 	Name       string `yaml:"name"`
 	ParentPath string `yaml:"parentPath"`
+	UnitPath   string `yaml:"unitPath"`
+}
+
+func (u *UnitLegal) SetUnitType(t string) {
+	u.Type = t
+}
+
+func (u *UnitLegal) SetUnitName() {
+	u.Name = UNIT_NAME
 }
 
 func (u *UnitLegal) SetParentDir(pth string) {
 	u.ParentPath = pth
+}
+
+// Used with loaders
+func (u *UnitLegal) SetUnitDir() {
+	u.UnitPath = u.UnitDir()
 }
 
 func (u UnitLegal) UnitDir() string {

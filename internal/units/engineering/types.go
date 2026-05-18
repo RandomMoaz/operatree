@@ -24,12 +24,27 @@ var (
 )
 
 type UnitEngineering struct {
+	Type       string `yaml:"type"`
 	Name       string `yaml:"name"`
 	ParentPath string `yaml:"parentPath"`
+	UnitPath   string `yaml:"unitPath"`
+}
+
+func (u *UnitEngineering) SetUnitType(t string) {
+	u.Type = t
+}
+
+func (u *UnitEngineering) SetUnitName() {
+	u.Name = UNIT_NAME
 }
 
 func (u *UnitEngineering) SetParentDir(pth string) {
 	u.ParentPath = pth
+}
+
+// Used with loaders
+func (u *UnitEngineering) SetUnitDir() {
+	u.UnitPath = u.UnitDir()
 }
 
 func (u UnitEngineering) UnitDir() string {

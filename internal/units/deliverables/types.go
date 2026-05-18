@@ -21,12 +21,27 @@ var (
 )
 
 type UnitDeliverables struct {
+	Type       string `yaml:"type"`
 	Name       string `yaml:"name"`
 	ParentPath string `yaml:"parentPath"`
+	UnitPath   string `yaml:"unitPath"`
+}
+
+func (u *UnitDeliverables) SetUnitType(t string) {
+	u.Type = t
+}
+
+func (u *UnitDeliverables) SetUnitName() {
+	u.Name = UNIT_NAME
 }
 
 func (u *UnitDeliverables) SetParentDir(pth string) {
 	u.ParentPath = pth
+}
+
+// Used with loaders
+func (u *UnitDeliverables) SetUnitDir() {
+	u.UnitPath = u.UnitDir()
 }
 
 func (u UnitDeliverables) UnitDir() string {

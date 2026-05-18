@@ -18,12 +18,27 @@ var (
 )
 
 type UnitMediaLib struct {
+	Type       string `yaml:"type"`
 	Name       string `yaml:"name"`
 	ParentPath string `yaml:"parentPath"`
+	UnitPath   string `yaml:"unitPath"`
+}
+
+func (u *UnitMediaLib) SetUnitType(t string) {
+	u.Type = t
+}
+
+func (u *UnitMediaLib) SetUnitName() {
+	u.Name = UNIT_NAME
 }
 
 func (u *UnitMediaLib) SetParentDir(pth string) {
 	u.ParentPath = pth
+}
+
+// Used with loaders
+func (u *UnitMediaLib) SetUnitDir() {
+	u.UnitPath = u.UnitDir()
 }
 
 func (u UnitMediaLib) UnitDir() string {
