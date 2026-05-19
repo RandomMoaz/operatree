@@ -20,8 +20,8 @@ func init() {
 
 var newCmd = &cobra.Command{
 	Use:       "new [event | task]",
-	Short:     "creates new entity",
-	Long:      "creates new entity within project",
+	Short:     "Creates new entity",
+	Long:      "Creates new entity within project",
 	ValidArgs: []cobra.Completion{"event", "task", "topic", "objective"},
 	Args:      cobra.MatchAll(cobra.OnlyValidArgs, cobra.ExactArgs(1)),
 	Run:       newUnitEntity,
