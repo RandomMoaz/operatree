@@ -54,3 +54,7 @@ func ParseParticipants(participants string) []string {
 
 	return s
 }
+
+func ParsePersonName(name string) string {
+	return cases.Title(language.English, cases.Compact).String(name)
+}

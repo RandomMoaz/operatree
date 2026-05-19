@@ -55,3 +55,14 @@ func StructToFile(s any, fullName string) error {
 
 	return nil
 }
+
+// `fullname` is the full file name including abs path
+func TextToMDFile(s string, fullName string) error {
+	b := []byte(s)
+
+	if err := os.WriteFile(fullName, b, 0775); err != nil {
+		return err
+	}
+
+	return nil
+}

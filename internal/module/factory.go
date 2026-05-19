@@ -82,7 +82,13 @@ func FactoryLegal(ppth string) Module {
 		AbsPath:  path.Join(ppth, n),
 		Modules:  []Module{},
 		Subjects: []subject.Subject{},
-		SubDirs:  []string{},
+		SubDirs: []string{
+			"contracts",
+			"ndas",
+			"compliance",
+			"approvals",
+			"templates",
+		},
 	}
 
 	return m
@@ -135,7 +141,13 @@ func FactoryResearch(ppth string) Module {
 				AbsPath:  path.Join(ppth, n, "04_REFERENCES"),
 				Modules:  []Module{},
 				Subjects: []subject.Subject{},
-				SubDirs:  []string{},
+				SubDirs: []string{
+					"articles",
+					"books",
+					"papers",
+					"standards",
+					"vendor_docs",
+				},
 			},
 			{
 				Type:     ModuleAudioNotes,
@@ -143,7 +155,11 @@ func FactoryResearch(ppth string) Module {
 				AbsPath:  path.Join(ppth, n, "05_AUDIO_NOTES"),
 				Modules:  []Module{},
 				Subjects: []subject.Subject{},
-				SubDirs:  []string{},
+				SubDirs: []string{
+					"raw",
+					"transcriptions",
+					"indexed",
+				},
 			},
 			{
 				Type:     ModuleAttachements,
@@ -232,8 +248,11 @@ func FactoryMediaLib(ppth string) Module {
 		Modules:  []Module{},
 		Subjects: []subject.Subject{},
 		SubDirs: []string{
+			"photos_clean",
+			"videos",
+			"diagrams",
+			"presentation_assets",
 			"branding",
-			"assets",
 		},
 	}
 
@@ -272,7 +291,11 @@ func FactoryArchive(ppth string) Module {
 		AbsPath:  path.Join(ppth, n),
 		Modules:  []Module{},
 		Subjects: []subject.Subject{},
-		SubDirs:  []string{},
+		SubDirs: []string{
+			"old_versions",
+			"closed_tasks",
+			"deprecated",
+		},
 	}
 
 	return m

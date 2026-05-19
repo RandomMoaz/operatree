@@ -14,6 +14,7 @@ func SubjectFactory(st SubjectType, ppth string) (Subject, error) {
 	s := Subject{
 		Type:    st,
 		SubDirs: SubDirs[st],
+		Files:   Files[st],
 	}
 
 	// call interactive to collect subject properties and fill subject object
@@ -42,6 +43,9 @@ func nameFactory(s Subject) string {
 	case SubjectTask:
 		sn := metadata.FormatName(s.Name)
 		return fmt.Sprintf("%s-%s", s.Date, sn)
+	case SubjectTopic:
+		sn := metadata.FormatName(s.Name)
+		return sn
 	default:
 		return s.Name
 	}

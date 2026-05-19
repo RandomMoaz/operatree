@@ -11,7 +11,7 @@ func interactiveCLI(st SubjectType, s *Subject) error {
 
 	// Standard props
 	prompt := promptui.Prompt{
-		Label: "Event name",
+		Label: "Name",
 	}
 	name, err := prompt.Run()
 	if err != nil {
@@ -52,6 +52,7 @@ func interactiveCLI(st SubjectType, s *Subject) error {
 	s.Notes = notes
 
 	// Custom props based on type
+	// Event props
 	if st == SubjectEvent {
 
 		// Location prompt
@@ -74,6 +75,34 @@ func interactiveCLI(st SubjectType, s *Subject) error {
 
 		s.Location = location
 		s.Paricipants = metadata.ParseParticipants(participants)
+	}
+
+	// Task props
+	if st == SubjectTask {
+		// Owner prompt
+		prompt = promptui.Prompt{
+			Label: "Owner",
+		}
+		owner, err := prompt.Run()
+		if err != nil {
+			return err
+		}
+
+		// Status prompt
+		prompt = promptui.Prompt{
+			Label:   "Status [planned|postponed|done]",
+			Default: "planned",
+		}
+		status, err := prompt.Run()
+		if err != nil {
+			return err
+		}
+
+		// To-Do: add select for related objectives -> read from metadata and list here
+		// To-Do: add select for related events -> read from metadata and list here
+
+		s.Owner = metadata.ParsePersonName(owner)
+		s.Status = status
 	}
 
 	return nil
