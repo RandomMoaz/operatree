@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/hanymamdouh82/operatree/internal/types"
-	"github.com/hanymamdouh82/operatree/internal/units/event"
+	"github.com/hanymamdouh82/operatree/internal/filesystem"
+	"github.com/hanymamdouh82/operatree/internal/module"
 	"gopkg.in/yaml.v3"
 )
 
@@ -13,29 +13,15 @@ const (
 	METADATA_FILE = "metadata.yml"
 )
 
-type Unit interface {
-	Bootstrap(pth string) error
-	UnitDir() string
-	SetParentDir(pth string)
-	SetUnitName()
-	SetUnitDir()
-	SetUnitType(t types.UnitType)
-	UnitType() types.UnitType
-}
-
 type Project struct {
-	Name    string   `yaml:"name"`
-	BaseDir string   `yaml:"baseDir"`
-	Tags    []string `yaml:"tags"`
-	Units   []Unit   `yaml:"units"`
+	Name    string          `yaml:"name"`
+	BaseDir string          `yaml:"baseDir"`
+	Tags    []string        `yaml:"tags"`
+	Modules []module.Module `yaml:"modules"`
 }
 
 func (p *Project) ProjectName() string {
 	return p.Name
-}
-
-func (p *Project) MetadataFile() string {
-	return path.Join(p.ProjectDir(), METADATA_FILE)
 }
 
 // Returns base dir of the project. It is the dir where project resides
@@ -65,16 +51,12 @@ func (p *Project) Describe() error {
 	return nil
 }
 
-// Use to add unit to project, it is reponsible to set required project properties into unit
-// t: unit type, it is very important since it defines unit types during loading
-func (p *Project) AddUnit(u Unit, t types.UnitType) {
-	u.SetUnitType(t)
-	u.SetUnitName()
-	u.SetParentDir(p.ProjectDir())
-	u.SetUnitDir()
-	p.Units = append(p.Units, u)
-}
+func (p *Project) WriteMetadata() error {
 
-func (p *Project) UnitEvents() (*event.UnitEvents, error) {
-	return GetUnit[*event.UnitEvents](p, types.UnitEvents)
+	fn := path.Join(p.ProjectDir(), METADATA_FILE)
+	if err := filesystem.StructToFile(p, fn); err != nil {
+		return err
+	}
+
+	return nil
 }

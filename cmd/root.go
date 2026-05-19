@@ -8,7 +8,9 @@ import (
 )
 
 var (
-	pDir string
+	baseDir string // abs base dir where project is located. Doesn't include project name
+	prjDir  string // abs path of project including its name
+	verbose bool   // verbose flag
 )
 
 var rootCmd = &cobra.Command{

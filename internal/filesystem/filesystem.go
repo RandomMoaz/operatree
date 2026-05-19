@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 // if found return with error, any other case return nil
@@ -28,7 +30,26 @@ func CheckDirExists(pth string) error {
 
 func CreateDir(pth string) error {
 
+	if err := CheckDirExists(pth); err != nil {
+		return err
+	}
+
 	if err := os.Mkdir(pth, 0775); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// `fullname` is the full file name including abs path
+func StructToFile(s any, fullName string) error {
+
+	b, err := yaml.Marshal(s)
+	if err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(fullName, b, 0775); err != nil {
 		return err
 	}
 

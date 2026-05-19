@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	descCmd.Flags().StringVarP(&pDir, "dest", "d", "/mnt/extra/onfly/testprj", "project directory")
+	descCmd.Flags().StringVarP(&prjDir, "dest", "d", "/mnt/extra/onfly/testprj", "project directory")
 	rootCmd.AddCommand(descCmd)
 }
 
@@ -21,7 +21,7 @@ var descCmd = &cobra.Command{
 }
 
 func describe(cmd *cobra.Command, args []string) {
-	p, err := project.Load(pDir)
+	p, err := project.Load(prjDir)
 	if err != nil {
 		log.Fatal(err)
 	}

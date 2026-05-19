@@ -3,17 +3,18 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"slices"
 
+	"github.com/hanymamdouh82/operatree/internal/module"
 	"github.com/hanymamdouh82/operatree/internal/project"
-	"github.com/hanymamdouh82/operatree/internal/units/event"
+	"github.com/hanymamdouh82/operatree/internal/subject"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 )
 
 var entityName string
 
 func init() {
-	newCmd.Flags().StringVarP(&pDir, "dest", "d", "/mnt/extra/onfly/testprj", "project directory")
+	newCmd.Flags().StringVarP(&prjDir, "dest", "d", "/mnt/extra/onfly/testprj", "project directory")
 	newCmd.Flags().StringVarP(&entityName, "name", "n", "", "entity name")
 	rootCmd.AddCommand(newCmd)
 }
@@ -29,14 +30,17 @@ var newCmd = &cobra.Command{
 
 func newUnitEntity(cmd *cobra.Command, args []string) {
 	a := args[0]
-	p, err := project.Load(pDir)
+	p, err := project.Load(prjDir)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	switch a {
 	case "event":
-		newEvent(&p)
+		if err := newEvent(&p); err != nil {
+			log.Fatal(err)
+		}
+
 	case "task":
 		fmt.Println("will create task")
 	default:
@@ -45,29 +49,27 @@ func newUnitEntity(cmd *cobra.Command, args []string) {
 }
 
 func newEvent(p *project.Project) error {
-	u, err := p.UnitEvents()
+
+	i := slices.IndexFunc(p.Modules, func(m module.Module) bool {
+		return m.Type == "events"
+	})
+	m := p.Modules[i]
+
+	// module abs path defines where subject will reside
+	s, err := subject.SubjectFactory(subject.SubjectEvent, m.AbsPath)
 	if err != nil {
 		return err
 	}
 
-	// if name flag is not provided, we open interactive CLI
-	var e event.Event
-	if entityName == "" {
-		if e, err = u.NewInteractive(); err != nil {
-			return err
-		}
-		y, _ := yaml.Marshal(e)
-		fmt.Printf("%s\n", y)
-		return nil
-	}
-
-	// create empty event using provided name flag only and default values
-	e, err = u.New(entityName)
-	if err != nil {
+	if err := s.WriteToDisk(); err != nil {
 		return err
 	}
-	y, _ := yaml.Marshal(e)
-	fmt.Printf("%s\n", y)
+
+	// update project metadata and write to disk
+	p.Modules[i].Subjects = append(m.Subjects, s)
+	if err := p.WriteMetadata(); err != nil {
+		return err
+	}
 
 	return nil
 }
