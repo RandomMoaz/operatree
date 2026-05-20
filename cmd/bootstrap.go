@@ -43,5 +43,5 @@ func bootstrap(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	fmt.Printf("Project: %s (%s)\n", p.Name, p.ProjectDir)
+	fmt.Printf("Project: %s (%s)\n", p.Name, p.ProjectDir())
 }

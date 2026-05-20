@@ -35,7 +35,8 @@ func init() {
 	cfg = c
 
 	rootCmd.PersistentFlags().StringVarP(&prjDir, "dest", "d", "", "project directory")
-	rootCmd.PersistentPreRunE = resolveProjectDir
+	// rootCmd.PersistentPreRunE = resolveProjectDir
+	rootCmd.PersistentPreRun = resolveProjectDir
 }
 
 func Execute() {
@@ -45,42 +46,44 @@ func Execute() {
 	}
 }
 
-func resolveProjectDir(cmd *cobra.Command, args []string) error {
+func resolveProjectDir(cmd *cobra.Command, args []string) {
 	// commands that don't need a project dir
 	noProjectCmds := map[string]bool{
-		"init":    true,
-		"version": true,
-		"help":    true,
-		"explain": true,
-		"default": true,
+		"init":      true,
+		"bootstrap": true,
+		"version":   true,
+		"help":      true,
+		"explain":   true,
+		"default":   true,
 	}
 	if noProjectCmds[cmd.Name()] {
-		return nil
+		return
 	}
 
 	// 1. explicit -d flag
 	if prjDir != "" {
-		return nil
+		return
 	}
 
 	// 2. current dir has project metadata
 	if isProjectDir(".") {
 		prjDir = "."
-		return nil
+		return
 	}
 
 	// 3. config default
 	cfg, err := config.Load()
 	if err != nil {
-		return err
+		return
 	}
 	if cfg.Default.AbsPath != "" {
 		prjDir = cfg.Default.AbsPath
-		return nil
+		return
 	}
 
 	// 4. nothing — friendly error
-	return fmt.Errorf("no project found. Use -d to specify one, or run 'operatree default' to set a default")
+	// return fmt.Errorf("no project found. Use -d to specify one, or run 'operatree default' to set a default")
+	fmt.Errorf("no project found. Use -d to specify one, or run 'operatree default' to set a default")
 }
 
 func isProjectDir(path string) bool {

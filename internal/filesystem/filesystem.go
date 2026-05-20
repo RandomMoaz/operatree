@@ -34,7 +34,7 @@ func CreateDir(pth string) error {
 		return err
 	}
 
-	if err := os.Mkdir(pth, 0775); err != nil {
+	if err := os.MkdirAll(pth, 0775); err != nil {
 		return err
 	}
 
