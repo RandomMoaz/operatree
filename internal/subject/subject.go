@@ -98,7 +98,6 @@ func (s *Subject) WriteFiles() error {
 		sdp := path.Join(s.DirName, f)
 		t := fmt.Sprintf("# %s\n", s.Name)
 		if err := filesystem.TextToMDFile(t, sdp); err != nil {
-			fmt.Printf(err.Error())
 			return err
 		}
 	}
@@ -141,4 +140,11 @@ func (s *Subject) WriteToDisk() error {
 	}
 
 	return nil
+}
+
+// Prints subject on screen in a prettey style
+// Not all properties are displayed, such as subDirs not included
+// This function is intended to be used for subject briefing only
+func (s *Subject) Describe() {
+	describe(s)
 }
