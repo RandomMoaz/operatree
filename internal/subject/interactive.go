@@ -67,7 +67,7 @@ func interactiveCLI(st SubjectType, s *Subject, ss []Subject) error {
 	}
 
 	// Task-specific fields
-	if st == SubjectTask {
+	if st == SubjectTask && len(ss) > 0 {
 		var owner, status, relatedEvent string
 
 		// Build options for related events select
