@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/hanymamdouh82/operatree/internal/config"
@@ -41,4 +42,6 @@ func bootstrap(cmd *cobra.Command, args []string) {
 			log.Fatal(err)
 		}
 	}
+
+	fmt.Printf("Project: %s (%s)\n", p.Name, p.ProjectDir)
 }

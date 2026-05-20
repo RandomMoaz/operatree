@@ -46,6 +46,7 @@ func Load() (Config, error) {
 	return cfg, nil
 }
 
+// Saves config
 func Save(cfg Config) error {
 	dir, err := configDir()
 	if err != nil {
@@ -88,5 +89,16 @@ func AddProject(name, absPath, template string) error {
 		Template: template,
 	})
 
+	return Save(cfg)
+}
+
+// SetDefaultProject sets default project to config file
+func SetDefaultProject(p Project) error {
+	cfg, err := Load()
+	if err != nil {
+		return err
+	}
+
+	cfg.Default = p
 	return Save(cfg)
 }

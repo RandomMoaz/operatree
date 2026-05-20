@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
+	"os"
 	"slices"
 
+	"github.com/hanymamdouh82/operatree/internal/activitylog"
 	"github.com/hanymamdouh82/operatree/internal/module"
 	"github.com/hanymamdouh82/operatree/internal/project"
 	"github.com/hanymamdouh82/operatree/internal/subject"
@@ -81,6 +84,18 @@ func newEvent(p *project.Project) error {
 		return err
 	}
 
+	fmt.Printf("Event created: %s\n", s.Name)
+
+	if err := activitylog.Log(
+		p.ProjectDir(),
+		activitylog.ActionCreate,
+		string(subject.SubjectEvent),
+		s.Name,
+	); err != nil {
+		// non-fatal — log failure should never block subject creation
+		fmt.Fprintf(os.Stderr, "warning: could not write activity log: %v\n", err)
+	}
+
 	return nil
 }
 
@@ -113,6 +128,18 @@ func newTask(p *project.Project) error {
 	p.Modules[i].Modules[j].Subjects = append(m.Subjects, s)
 	if err := p.WriteMetadata(); err != nil {
 		return err
+	}
+
+	fmt.Printf("Task created: %s\n", s.Name)
+
+	if err := activitylog.Log(
+		p.ProjectDir(),
+		activitylog.ActionCreate,
+		string(subject.SubjectEvent),
+		s.Name,
+	); err != nil {
+		// non-fatal — log failure should never block subject creation
+		fmt.Fprintf(os.Stderr, "warning: could not write activity log: %v\n", err)
 	}
 
 	return nil
@@ -149,10 +176,22 @@ func newTopic(p *project.Project) error {
 		return err
 	}
 
+	fmt.Printf("Topic created: %s\n", s.Name)
+
+	if err := activitylog.Log(
+		p.ProjectDir(),
+		activitylog.ActionCreate,
+		string(subject.SubjectEvent),
+		s.Name,
+	); err != nil {
+		// non-fatal — log failure should never block subject creation
+		fmt.Fprintf(os.Stderr, "warning: could not write activity log: %v\n", err)
+	}
+
 	return nil
 }
 
-// Adds new topic to Research / Objectives module
+// Adds new objective to Research / Objectives module
 func newObjective(p *project.Project) error {
 	ss := project.ListSubjects(p, "")
 
@@ -181,6 +220,18 @@ func newObjective(p *project.Project) error {
 	p.Modules[i].Modules[j].Subjects = append(m.Subjects, s)
 	if err := p.WriteMetadata(); err != nil {
 		return err
+	}
+
+	fmt.Printf("Objective created: %s\n", s.Name)
+
+	if err := activitylog.Log(
+		p.ProjectDir(),
+		activitylog.ActionCreate,
+		string(subject.SubjectEvent),
+		s.Name,
+	); err != nil {
+		// non-fatal — log failure should never block subject creation
+		fmt.Fprintf(os.Stderr, "warning: could not write activity log: %v\n", err)
 	}
 
 	return nil
