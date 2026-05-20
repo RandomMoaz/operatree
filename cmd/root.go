@@ -13,13 +13,16 @@ var (
 	verbose bool   // verbose flag
 )
 
+func init() {
+	// rootCmd.PersistentFlags().StringVarP(&prjDir, "dest", "d", ".", "project directory")
+	rootCmd.PersistentFlags().StringVarP(&prjDir, "dest", "d", "/mnt/extra/onfly/testprj", "project directory")
+}
+
 var rootCmd = &cobra.Command{
 	Use:   "operatree",
 	Short: "OperaTree project operating system",
 	Long:  "OperaTree is your project operating system built on your filesystem",
 	Run: func(cmd *cobra.Command, args []string) {
-		// do stuff here
-		// typically this is the entry point, anything to be executed before the command
 		fmt.Println("Welcome OperaTree...A project operating system built on your filesystem...!")
 	},
 }

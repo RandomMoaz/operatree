@@ -10,18 +10,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var entityName string
-
 func init() {
-	newCmd.Flags().StringVarP(&prjDir, "dest", "d", "/mnt/extra/onfly/testprj", "project directory")
-	newCmd.Flags().StringVarP(&entityName, "name", "n", "", "entity name")
 	rootCmd.AddCommand(newCmd)
 }
 
 var newCmd = &cobra.Command{
-	Use:       "new [event | task]",
-	Short:     "Creates new entity",
-	Long:      "Creates new entity within project",
+	Use:       "new [event | task | topic | objective]",
+	Short:     "Creates new subject",
+	Long:      "Creates new subject within project",
 	ValidArgs: []cobra.Completion{"event", "task", "topic", "objective"},
 	Args:      cobra.MatchAll(cobra.OnlyValidArgs, cobra.ExactArgs(1)),
 	Run:       newUnitEntity,

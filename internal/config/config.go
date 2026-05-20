@@ -1,1 +1,92 @@
 package config
+
+import (
+	"os"
+	"path/filepath"
+
+	"gopkg.in/yaml.v3"
+)
+
+const configFile = "operatree.yaml"
+
+func configDir() (string, error) {
+	dir, err := os.UserConfigDir() // ~/.config on Linux, ~/Library/Application Support on Mac
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "operatree"), nil
+}
+
+func ConfigPath() (string, error) {
+	dir, err := configDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, configFile), nil
+}
+
+func Load() (Config, error) {
+	path, err := ConfigPath()
+	if err != nil {
+		return Config{}, err
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return Config{}, nil // no config yet, return empty
+		}
+		return Config{}, err
+	}
+
+	var cfg Config
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return Config{}, err
+	}
+	return cfg, nil
+}
+
+func Save(cfg Config) error {
+	dir, err := configDir()
+	if err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+
+	data, err := yaml.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+
+	path, err := ConfigPath()
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, data, 0644)
+}
+
+// AddProject adds a project to tracked list if not already there
+func AddProject(name, absPath, template string) error {
+	cfg, err := Load()
+	if err != nil {
+		return err
+	}
+
+	for _, p := range cfg.Projects {
+		if p.AbsPath == absPath {
+			return nil // already tracked
+		}
+	}
+
+	cfg.Projects = append(cfg.Projects, Project{
+		Name:     name,
+		AbsPath:  absPath,
+		Template: template,
+	})
+
+	return Save(cfg)
+}

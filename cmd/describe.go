@@ -7,8 +7,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var plain bool
+
 func init() {
-	descCmd.Flags().StringVarP(&prjDir, "dest", "d", "/mnt/extra/onfly/testprj", "project directory")
+	descCmd.Flags().BoolVarP(&plain, "plain", "p", false, "output raw YAML for piping")
 	rootCmd.AddCommand(descCmd)
 }
 
@@ -26,5 +28,5 @@ func describe(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	p.Describe()
+	p.Describe(plain)
 }

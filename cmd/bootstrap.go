@@ -3,12 +3,19 @@ package cmd
 import (
 	"log"
 
+	"github.com/hanymamdouh82/operatree/internal/config"
 	"github.com/hanymamdouh82/operatree/internal/project"
 	"github.com/spf13/cobra"
 )
 
 func init() {
-	bootstrapCmd.Flags().StringVarP(&baseDir, "dest", "d", "/mnt/extra/onfly", "project root directory")
+	cfg, _ := config.Load() // best effort, empty if no config yet
+	defaultDir := "."
+	if cfg.StandardDir != "" {
+		defaultDir = cfg.StandardDir
+	}
+
+	bootstrapCmd.Flags().StringVarP(&baseDir, "base", "b", defaultDir, "project base directory")
 	bootstrapCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "show operation output")
 	rootCmd.AddCommand(bootstrapCmd)
 }
@@ -30,7 +37,7 @@ func bootstrap(cmd *cobra.Command, args []string) {
 
 	// To-Do: add flag for verbose / silent
 	if verbose {
-		if err := p.Describe(); err != nil {
+		if err := p.Describe(false); err != nil {
 			log.Fatal(err)
 		}
 	}

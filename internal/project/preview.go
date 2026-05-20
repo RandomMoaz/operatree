@@ -4,38 +4,28 @@ import (
 	"strings"
 
 	"github.com/hanymamdouh82/operatree/internal/subject"
-)
-
-const (
-	ansiReset  = "\033[0m"
-	ansiBold   = "\033[1m"
-	ansiDim    = "\033[2m"
-	ansiItalic = "\033[3m"
-	ansiPurple = "\033[38;5;141m"
-	ansiYellow = "\033[38;5;221m"
-	ansiGray   = "\033[38;5;244m"
-	ansiGreen  = "\033[38;5;114m"
+	"github.com/hanymamdouh82/operatree/internal/ui"
 )
 
 func label(s string) string {
-	return ansiPurple + ansiBold + s + ansiReset
+	return ui.AnsiPurple + ui.AnsiBold + s + ui.AnsiReset
 }
 
 func value(s string) string {
-	return ansiReset + s
+	return ui.AnsiReset + s
 }
 
 func dim(s string) string {
-	return ansiGray + ansiItalic + s + ansiReset
+	return ui.AnsiGray + ui.AnsiItalic + s + ui.AnsiReset
 }
 
 func formatPreview(s subject.Subject) string {
 	var b strings.Builder
 
 	// Header
-	b.WriteString(ansiBold + ansiPurple + s.Name + ansiReset)
-	b.WriteString(ansiGray + "  ·  " + string(s.Type) + ansiReset + "\n")
-	b.WriteString(ansiGray + strings.Repeat("─", 35) + ansiReset + "\n\n")
+	b.WriteString(ui.AnsiBold + ui.AnsiPurple + s.Name + ui.AnsiReset)
+	b.WriteString(ui.AnsiGray + "  ·  " + string(s.Type) + ui.AnsiReset + "\n")
+	b.WriteString(ui.AnsiGray + strings.Repeat("─", 35) + ui.AnsiReset + "\n\n")
 
 	// Core fields
 	if s.Date != "" {
@@ -58,7 +48,7 @@ func formatPreview(s subject.Subject) string {
 	if len(s.Tags) > 0 {
 		tags := make([]string, len(s.Tags))
 		for i, t := range s.Tags {
-			tags[i] = ansiYellow + "#" + t + ansiReset
+			tags[i] = ui.AnsiYellow + "#" + t + ui.AnsiReset
 		}
 		b.WriteString(label("Tags      ") + strings.Join(tags, "  ") + "\n")
 	}
@@ -72,7 +62,7 @@ func formatPreview(s subject.Subject) string {
 	// Relations
 	hasRelations := s.RelatedObjective != "" || len(s.RelatedEvents) > 0 || len(s.Outputs) > 0
 	if hasRelations {
-		b.WriteString("\n" + ansiGray + strings.Repeat("─", 35) + ansiReset + "\n")
+		b.WriteString("\n" + ui.AnsiGray + strings.Repeat("─", 35) + ui.AnsiReset + "\n")
 		if s.RelatedObjective != "" {
 			b.WriteString(label("Objective ") + value(s.RelatedObjective) + "\n")
 		}

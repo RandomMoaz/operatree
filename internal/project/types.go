@@ -41,14 +41,17 @@ func (p *Project) ProjectDir() string {
 // It is useful since users of CLI always needs a way to display all project details
 // the displayed information should follow UNIX/Linux style so it can be piped to
 // or chained with GNU tools such as `sed`, `cut`, `grep`, etc
-func (p *Project) Describe() error {
-	k, err := yaml.Marshal(p)
-	if err != nil {
-		return err
+func (p *Project) Describe(plain bool) error {
+	if plain {
+		y, err := yaml.Marshal(p)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%s\n", y)
+		return nil
 	}
 
-	// To-Do: format output instead of plain yaml format
-	fmt.Printf("%s\n", k)
+	describeProject(p)
 	return nil
 }
 

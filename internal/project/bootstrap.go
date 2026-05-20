@@ -1,6 +1,7 @@
 package project
 
 import (
+	"github.com/hanymamdouh82/operatree/internal/config"
 	"github.com/hanymamdouh82/operatree/internal/filesystem"
 )
 
@@ -29,6 +30,11 @@ func Bootstrap(name string, bpth string) (Project, error) {
 
 	// write project metadata
 	if err := np.WriteMetadata(); err != nil {
+		return np, err
+	}
+
+	// Register in config
+	if err := config.AddProject(name, np.ProjectDir(), "dev"); err != nil {
 		return np, err
 	}
 
