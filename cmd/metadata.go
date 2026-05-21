@@ -8,19 +8,18 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(findCmd)
+	rootCmd.AddCommand(metadataCmd)
 }
 
-var findCmd = &cobra.Command{
-	Use:   "find [type] [term]",
-	Short: "Finds a subject in project",
-	Long:  "Fuzzy-Find a subject in a project",
-	Args:  cobra.MatchAll(cobra.MaximumNArgs(2)),
-	Run:   find,
+var metadataCmd = &cobra.Command{
+	Use:   "metadata",
+	Short: "Edits subject metadata",
+	Long:  "Opens editor to edit metadata",
+	Args:  cobra.NoArgs,
+	Run:   editMetadata,
 }
 
-func find(cmd *cobra.Command, args []string) {
-
+func editMetadata(cmd *cobra.Command, args []string) {
 	p, err := project.Load(prjDir)
 	if err != nil {
 		log.Fatal(err)
@@ -43,7 +42,13 @@ func find(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	if s.Type != "" {
-		s.Describe()
+	// call edit
+	if err := s.EditMetadata(); err != nil {
+		log.Fatal(err)
+	}
+
+	// Sync project metadata with subject metadata
+	if err := project.Sync(&p); err != nil {
+		log.Fatal(err)
 	}
 }

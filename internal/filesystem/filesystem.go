@@ -66,3 +66,11 @@ func TextToMDFile(s string, fullName string) error {
 
 	return nil
 }
+
+// Reads a file. Although it directly returns os.ReadFile, it is abstracted
+// so in future implementations we can add daemon reads, DB reads, etc
+// It is also abstract to handle edge-cases of different OS
+func ReadFile(mp string) ([]byte, error) {
+
+	return os.ReadFile(mp)
+}

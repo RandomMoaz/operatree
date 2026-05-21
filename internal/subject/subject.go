@@ -5,6 +5,7 @@ import (
 	"path"
 
 	"github.com/hanymamdouh82/operatree/internal/filesystem"
+	"github.com/hanymamdouh82/operatree/internal/runner"
 )
 
 type SubjectType string
@@ -147,4 +148,18 @@ func (s *Subject) WriteToDisk() error {
 // This function is intended to be used for subject briefing only
 func (s *Subject) Describe() {
 	describe(s)
+}
+
+func (s *Subject) EditMetadata() error {
+
+	// call config to get editor
+
+	// run editor
+
+	fn := path.Join(s.DirName, "metadata.yml")
+	if err := runner.EditFile(fn); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -6,6 +6,8 @@ import "fmt"
 type Config struct {
 	StandardDir string    `yaml:"standardDir"` // default project base dir
 	Default     Project   `yaml:"default"`     // default project - used when current dir doen't include project yaml of -d is not used
+	Editor      string    `yaml:"editor"`      // Default file editor - if not provided fallback to $EDITOR
+	FileManager string    `yaml:"fileManager"` // Default file manager
 	Projects    []Project `yaml:"projects"`    // tracked projects
 	Daemon      Daemon    `yaml:"daemon"`      // future daemon config
 }
