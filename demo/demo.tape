@@ -4,7 +4,6 @@
 #           operatree installed (make install)
 #           tree installed (sudo apt-get install tree or brew install tree)
 
-
 # -------------------------------------------------------------------
 # Output
 # -------------------------------------------------------------------
@@ -18,13 +17,11 @@ Output ./operatree-demo.mp4
 
 Set Shell       "bash"
 Set FontSize    14
-# Set FontFamily  "JetBrains Mono"
 Set Width       1200
 Set Height      700
-# Set Theme       "Dracula"
 Set Padding     20
 Set Framerate   30
-Set WindowBar Colorful
+Set WindowBar   Colorful
 
 # -------------------------------------------------------------------
 # 1. Welcome
@@ -39,13 +36,23 @@ Enter
 Sleep 2s
 
 # -------------------------------------------------------------------
-# 2. Initialize config
+# 2. Version info
 # -------------------------------------------------------------------
 
 Type "clear"
 Enter
 Sleep 500ms
-Sleep 1s
+Type "operatree version"
+Enter
+Sleep 2s
+
+# -------------------------------------------------------------------
+# 3. Initialize config
+# -------------------------------------------------------------------
+
+Type "clear"
+Enter
+Sleep 500ms
 Type "# Initialize OperaTree for the first time"
 Sleep 1s
 Enter
@@ -55,20 +62,31 @@ Type "operatree init"
 Enter
 Sleep 1s
 
-# Answer the init form: standard projects directory
+# Standard projects directory
 Type "/tmp/operatree-demo"
 Sleep 500ms
+Enter
+Sleep 500ms
+
+# Editor
+Type "nvim"
+Sleep 300ms
+Enter
+Sleep 500ms
+
+# File manager
+Type "nautilus"
+Sleep 300ms
 Enter
 Sleep 3s
 
 # -------------------------------------------------------------------
-# 3. Bootstrap a project
+# 4. Bootstrap a project
 # -------------------------------------------------------------------
 
 Type "clear"
 Enter
 Sleep 500ms
-Sleep 1s
 Type "# Bootstrap a new project"
 Sleep 1s
 Enter
@@ -93,16 +111,15 @@ Sleep 4s
 Space
 Type "q"
 Enter
-Sleep 4s
+Sleep 2s
 
 # -------------------------------------------------------------------
-# 4. Set as default project (using interactive selection)
+# 5. Set as default project
 # -------------------------------------------------------------------
 
 Type "clear"
 Enter
 Sleep 500ms
-Sleep 1s
 Type "# Set emissions-validation as the default project"
 Sleep 1s
 Enter
@@ -111,35 +128,23 @@ Sleep 500ms
 Type "operatree default"
 Enter
 Sleep 1s
-
-# Select emissions-validation from the list
 Sleep 500ms
 Down
 Sleep 300ms
 Enter
 Sleep 2s
 
-# Verify default project is set
-Type "clear"
-Enter
-Sleep 500ms
-Type "# Verify the default project"
-Sleep 1s
-Enter
-Sleep 500ms
-
 Type "operatree default --show"
 Enter
-Sleep 3s
+Sleep 2s
 
 # -------------------------------------------------------------------
-# 5. Describe the fresh project (using default)
+# 6. Describe the fresh project
 # -------------------------------------------------------------------
 
 Type "clear"
 Enter
 Sleep 500ms
-Sleep 1s
 Type "# Describe the project structure"
 Sleep 1s
 Enter
@@ -150,13 +155,12 @@ Enter
 Sleep 4s
 
 # -------------------------------------------------------------------
-# 6. Create an event
+# 7. Create an event
 # -------------------------------------------------------------------
 
 Type "clear"
 Enter
 Sleep 500ms
-Sleep 1s
 Type "# Create a new event"
 Sleep 1s
 Enter
@@ -172,7 +176,7 @@ Sleep 300ms
 Enter
 Sleep 500ms
 
-# Date - manual entry
+# Date
 Type "2026-05-15"
 Sleep 300ms
 Enter
@@ -202,39 +206,38 @@ Sleep 300ms
 Enter
 Sleep 3s
 
-# Show the event was created as a markdown file
+# Show the structure
 Type "clear"
 Enter
 Sleep 500ms
-Type "# Events are stored as markdown files - easily editable, version controllable"
+Type "# Subjects are stored as directories with META.yaml — plain text, git-friendly"
 Sleep 1s
 Enter
 Sleep 500ms
 
-Type "tree /tmp/operatree-demo/emissions-validation/events"
+Type "tree /tmp/operatree-demo/emissions-validation/01_EVENTS"
 Enter
 Sleep 3s
 
 Type "clear"
 Enter
 Sleep 500ms
-Type "# View the event content"
+Type "# View the subject metadata"
 Sleep 1s
 Enter
 Sleep 500ms
 
-Type "head -20 /tmp/operatree-demo/emissions-validation/events/*.md"
+Type "cat /tmp/operatree-demo/emissions-validation/01_EVENTS/*/META.yaml"
 Enter
 Sleep 4s
 
 # -------------------------------------------------------------------
-# 7. Create a task
+# 8. Create a task
 # -------------------------------------------------------------------
 
 Type "clear"
 Enter
 Sleep 500ms
-Sleep 1s
 Type "# Create a new task"
 Sleep 1s
 Enter
@@ -250,7 +253,7 @@ Sleep 300ms
 Enter
 Sleep 500ms
 
-# Date - manual entry
+# Date
 Type "2026-05-20"
 Sleep 300ms
 Enter
@@ -284,27 +287,13 @@ Sleep 500ms
 Enter
 Sleep 3s
 
-# Show tasks directory
-Type "clear"
-Enter
-Sleep 500ms
-Type "# Tasks are also markdown files with metadata"
-Sleep 1s
-Enter
-Sleep 500ms
-
-Type "tree /tmp/operatree-demo/emissions-validation/tasks"
-Enter
-Sleep 3s
-
 # -------------------------------------------------------------------
-# 8. Create a topic
+# 9. Create a topic
 # -------------------------------------------------------------------
 
 Type "clear"
 Enter
 Sleep 500ms
-Sleep 1s
 Type "# Create a knowledge topic"
 Sleep 1s
 Enter
@@ -320,7 +309,7 @@ Sleep 300ms
 Enter
 Sleep 500ms
 
-# Date - manual entry
+# Date
 Type "2026-05-18"
 Sleep 300ms
 Enter
@@ -338,11 +327,11 @@ Sleep 300ms
 Enter
 Sleep 3s
 
-# Show the complete filesystem structure
+# Show full structure
 Type "clear"
 Enter
 Sleep 500ms
-Type "# Everything is just files and directories - no database, no lock-in"
+Type "# Everything is just files and directories — no database, no lock-in"
 Sleep 1s
 Enter
 Sleep 500ms
@@ -352,13 +341,12 @@ Enter
 Sleep 4s
 
 # -------------------------------------------------------------------
-# 9. Project summary
+# 10. Project summary
 # -------------------------------------------------------------------
 
 Type "clear"
 Enter
 Sleep 500ms
-Sleep 1s
 Type "# Project at a glance"
 Sleep 1s
 Enter
@@ -369,13 +357,12 @@ Enter
 Sleep 3s
 
 # -------------------------------------------------------------------
-# 10. Fuzzy find — open browser
+# 11. Fuzzy find
 # -------------------------------------------------------------------
 
 Type "clear"
 Enter
 Sleep 500ms
-Sleep 1s
 Type "# Find anything across all metadata"
 Sleep 1s
 Enter
@@ -384,9 +371,6 @@ Sleep 500ms
 Type "operatree find cairo"
 Enter
 Sleep 2s
-
-# Navigate the finder — just show it working
-Sleep 1s
 Down
 Sleep 500ms
 Up
@@ -395,13 +379,12 @@ Enter
 Sleep 2s
 
 # -------------------------------------------------------------------
-# 11. Find with type filter
+# 12. Find with type filter
 # -------------------------------------------------------------------
 
 Type "clear"
 Enter
 Sleep 500ms
-Sleep 1s
 Type "# Filter by type and search term"
 Sleep 1s
 Enter
@@ -414,31 +397,70 @@ Enter
 Sleep 2s
 
 # -------------------------------------------------------------------
-# 12. Explain
+# 13. Edit metadata
 # -------------------------------------------------------------------
 
 Type "clear"
 Enter
 Sleep 500ms
-Sleep 1s
-Type "# Built-in directory philosophy guide"
+Type "# Edit subject metadata directly in your editor"
 Sleep 1s
 Enter
 Sleep 500ms
 
-Type "operatree explain"
+Type "operatree metadata event cairo"
 Enter
-Sleep 3s
+Sleep 2s
+
+# Select the subject
+Enter
+Sleep 1s
+
+# Editor opens — wait, simulate a quick edit and quit
+Sleep 2s
+Type ":q"
+Enter
+Sleep 1s
+
+# Sync after edit
+Type "clear"
+Enter
+Sleep 500ms
+Type "# Sync project metadata after manual edits"
+Sleep 1s
+Enter
+Sleep 500ms
+
+Type "operatree sync"
+Enter
+Sleep 2s
 
 # -------------------------------------------------------------------
-# 13. Pipe-friendly output
+# 14. Open subject directory
 # -------------------------------------------------------------------
 
 Type "clear"
 Enter
 Sleep 500ms
+Type "# Open subject directory in file manager"
 Sleep 1s
-Type "# Works with standard UNIX tools"
+Enter
+Sleep 500ms
+
+Type "operatree open event cairo"
+Enter
+Sleep 2s
+Enter
+Sleep 2s
+
+# -------------------------------------------------------------------
+# 15. Pipe-friendly output
+# -------------------------------------------------------------------
+
+Type "clear"
+Enter
+Sleep 500ms
+Type "# Pipe-friendly — works with standard UNIX tools"
 Sleep 1s
 Enter
 Sleep 500ms
@@ -448,19 +470,65 @@ Enter
 Sleep 2s
 
 # -------------------------------------------------------------------
-# 14. Bonus: Set a different default project
+# 16. Activity log
 # -------------------------------------------------------------------
 
 Type "clear"
 Enter
 Sleep 500ms
-Sleep 1s
-Type "# Switch to a different default project"
+Type "# Append-only audit trail at project root"
 Sleep 1s
 Enter
 Sleep 500ms
 
-Type "# First, bootstrap another project"
+Type "cat /tmp/operatree-demo/emissions-validation/activity.log"
+Enter
+Sleep 3s
+
+Type "clear"
+Enter
+Sleep 500ms
+Type "# Pipe the log with standard tools"
+Sleep 1s
+Enter
+Sleep 500ms
+
+Type "grep CREATE /tmp/operatree-demo/emissions-validation/activity.log | cut -f3 | sort | uniq -c"
+Enter
+Sleep 2s
+
+# -------------------------------------------------------------------
+# 17. Track / untrack
+# -------------------------------------------------------------------
+
+Type "clear"
+Enter
+Sleep 500ms
+Type "# Track an existing project"
+Sleep 1s
+Enter
+Sleep 500ms
+
+Type "operatree -d /tmp/operatree-demo/emissions-validation track"
+Enter
+Sleep 2s
+
+Type "operatree -d /tmp/operatree-demo/emissions-validation untrack"
+Enter
+Sleep 2s
+
+Type "operatree -d /tmp/operatree-demo/emissions-validation track"
+Enter
+Sleep 2s
+
+# -------------------------------------------------------------------
+# 18. Second project — show multi-project workflow
+# -------------------------------------------------------------------
+
+Type "clear"
+Enter
+Sleep 500ms
+Type "# Bootstrap a second project"
 Sleep 1s
 Enter
 Sleep 500ms
@@ -472,7 +540,7 @@ Sleep 3s
 Type "clear"
 Enter
 Sleep 500ms
-Type "# Set analytics-dashboard as the new default"
+Type "# Switch default project"
 Sleep 1s
 Enter
 Sleep 500ms
@@ -480,94 +548,65 @@ Sleep 500ms
 Type "operatree default"
 Enter
 Sleep 1s
-
-# Select analytics-dashboard from the list
 Down
 Sleep 300ms
 Enter
 Sleep 2s
 
-Type "clear"
-Enter
-Sleep 500ms
-Type "# Verify the switch"
-Sleep 1s
-Enter
-Sleep 500ms
-
 Type "operatree default --show"
 Enter
 Sleep 2s
-
-Type "clear"
-Enter
-Sleep 500ms
-Type "# Show its summary"
-Sleep 1s
-Enter
-Sleep 500ms
 
 Type "operatree summary"
 Enter
 Sleep 3s
 
-# -------------------------------------------------------------------
-# 15. Switch back to original project
-# -------------------------------------------------------------------
-
-Type "clear"
-Enter
-Sleep 500ms
-Sleep 1s
-Type "# Switch back to emissions-validation"
-Sleep 1s
-Enter
-Sleep 500ms
-
+# Switch back
 Type "operatree default"
 Enter
 Sleep 1s
-
-# Select emissions-validation from the list (first item)
 Enter
 Sleep 2s
-
-Type "clear"
-Enter
-Sleep 500ms
-Type "# Back to original project"
-Sleep 1s
-Enter
-Sleep 500ms
 
 Type "operatree default --show"
 Enter
 Sleep 2s
 
 # -------------------------------------------------------------------
-# 16. Demonstrate version control friendly
+# 19. Version control friendly
 # -------------------------------------------------------------------
 
 Type "clear"
 Enter
 Sleep 500ms
-Sleep 1s
-Type "# All data is plain text - perfect for git"
+Type "# All data is plain text — initialize git and you have full version history"
 Sleep 1s
 Enter
 Sleep 500ms
 
-Type "cd /tmp/operatree-demo/emissions-validation && ls -la"
+Type "cd /tmp/operatree-demo/emissions-validation && git init && git add -A && git commit -m 'initial project snapshot'"
+Enter
+Sleep 3s
+
+Type "git log --oneline"
 Enter
 Sleep 2s
+
+# -------------------------------------------------------------------
+# 20. Explain
+# -------------------------------------------------------------------
 
 Type "clear"
 Enter
 Sleep 500ms
-Type "# No hidden databases, no binary files - just your content"
+Type "# Built-in directory philosophy guide"
 Sleep 1s
 Enter
-Sleep 2s
+Sleep 500ms
+
+Type "operatree explain"
+Enter
+Sleep 4s
 
 # -------------------------------------------------------------------
 # End
@@ -576,7 +615,6 @@ Sleep 2s
 Type "clear"
 Enter
 Sleep 500ms
-Sleep 1s
 Type "# github.com/hanymamdouh82/operatree"
 Sleep 3s
 Enter

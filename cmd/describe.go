@@ -15,7 +15,7 @@ func init() {
 }
 
 var descCmd = &cobra.Command{
-	Use:   "desc",
+	Use:   "describe",
 	Short: "Describes a project",
 	Long:  "Describes a project and prints its metadata",
 	Args:  cobra.NoArgs,

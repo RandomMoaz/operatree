@@ -18,6 +18,7 @@ This document explains how to contribute effectively — whether you're fixing a
   - [Adding a Subject Type](#adding-a-subject-type)
   - [Adding a Project Template](#adding-a-project-template)
   - [Improving Search](#improving-search)
+  - [Version Control & Backup Backends](#version-control--backup-backends)
 - [Commit Convention](#commit-convention)
 - [Pull Request Process](#pull-request-process)
 - [License](#license)
@@ -79,22 +80,30 @@ make install
 ```
 operatree/
 ├── cmd/                    # Cobra CLI commands
-│   ├── root.go             # root command and global flags
+│   ├── root.go             # root command, global flags, project dir resolution
 │   ├── bootstrap.go        # operatree bootstrap
 │   ├── new.go              # operatree new
 │   ├── find.go             # operatree find
+│   ├── metadata.go         # operatree metadata
+│   ├── open.go             # operatree open
+│   ├── sync.go             # operatree sync
+│   ├── track.go            # operatree track
+│   ├── untrack.go          # operatree untrack
 │   ├── describe.go         # operatree desc
 │   ├── summary.go          # operatree summary
+│   ├── default.go          # operatree default
 │   ├── init.go             # operatree init
 │   └── version.go          # operatree version
 ├── internal/
+│   ├── activitylog/        # append-only activity log
 │   ├── config/             # config file management
-│   ├── project/            # project struct, bootstrap, search, describe
+│   ├── project/            # project struct, bootstrap, search, describe, sync
 │   ├── module/             # module struct and factories
 │   ├── subject/            # subject struct, factory, interactive CLI
 │   ├── metadata/           # tag and participant parsing utilities
 │   ├── filesystem/         # filesystem helpers
 │   └── help/               # embedded documentation
+├── demo/                   # VHS tape and recorded demo
 ├── LICENSE
 ├── README.md
 ├── CONTRIBUTING.md
@@ -152,8 +161,8 @@ type Subject struct {
     // ... existing fields ...
 
     // Meeting-specific — omitempty keeps YAML clean for other types
-    Agenda    string   `yaml:"agenda,omitempty"`
-    MoMFile   string   `yaml:"momFile,omitempty"`
+    Agenda  string `yaml:"agenda,omitempty"`
+    MoMFile string `yaml:"momFile,omitempty"`
 }
 ```
 
@@ -202,10 +211,12 @@ case "meeting":
 
 And implement `newMeeting` following the same pattern as `newEvent`.
 
-**Step 5 — Update the find command type map**
+**Step 5 — Update the known types map**
+
+The known types map is used by `find`, `metadata`, and `open` to distinguish a type filter from a search term:
 
 ```go
-// cmd/find.go
+// cmd/root.go or cmd/find.go
 var knownTypes = map[string]bool{
     "event":     true,
     "task":      true,
@@ -219,7 +230,7 @@ var knownTypes = map[string]bool{
 
 Add your type to the Subject Types table in `README.md`.
 
-That's it. No core changes, no breaking changes, no migration needed.
+That's it. No core changes, no breaking changes, no migration needed. Existing `META.yaml` files are unaffected since new fields use `omitempty`.
 
 ---
 
@@ -260,22 +271,53 @@ var templates = map[string]func(string, string) Project{
 
 **Step 3 — Update README**
 
-Document your template in the README — what domain it targets and what modules it includes.
+Document your template — what domain it targets and what modules it includes.
 
 ---
 
 ### Improving Search
 
-The search pipeline is in `internal/project/search.go`. The current approach concatenates metadata fields into a `SearchStr` and runs fuzzy matching against it.
+The search pipeline lives in `internal/project/search.go`. The current approach concatenates metadata fields into a `SearchStr` per subject and runs fuzzy matching against it. The full project tree is walked recursively via `walkModule`, building a flat `[]SearchDB` with `ModulePath` breadcrumbs.
+
+The same search is used by `find`, `metadata`, and `open` — improvements benefit all three commands automatically.
 
 Potential improvements welcome:
 
 - **Field weighting** — name matches should rank higher than note matches
 - **Ranked results** — sort by relevance score not just match/no-match
-- **Semantic search** — embedding-based similarity (this is on the roadmap as a commercial module, but algorithmic improvements to the fuzzy layer are always welcome)
 - **Date-aware search** — `find last-week` or `find 2026-05`
+- **Semantic search** — embedding-based similarity (on the roadmap as a commercial module, but algorithmic improvements to the fuzzy layer are always welcome)
 
-If you're improving search, keep the `BuildSearchDB` / `SearchStr` pattern intact — it's the interface the rest of the system depends on.
+If you're improving search, keep the `BuildSearchDB` / `SearchStr` / `walkModule` pattern intact — it's the interface the rest of the system depends on.
+
+---
+
+### Version Control & Backup Backends
+
+OperaTree is designed to work naturally with external version control and backup tools. The filesystem layout is the contract — how changes are tracked and protected is a pluggable concern.
+
+The model has two layers that work together:
+
+**Layer 1 — Change detection:** a file watcher that monitors the project directory and triggers an action when files are added, modified, or deleted. OperaTree does not ship a watcher — it is designed to integrate with existing tools such as `watchexec`, `inotifywait`, or `fswatch`.
+
+**Layer 2 — The action:** what runs when a change is detected. Possible backends include Git (local or remote), rsync, Syncthing, rclone, and others.
+
+**Contribution ideas in this area:**
+
+- A `operatree watch` command that wraps a configurable watcher + action pair
+- Built-in Git integration — `operatree commit` to snapshot the current project state
+- Config-driven backend selection (git, rsync, syncthing) under a new `backup` config section
+- Git hook templates that users can install into their project with a single command
+- Documentation and example scripts for common watcher + backend combinations
+
+**Design constraints to respect:**
+
+- The watcher and action must always be optional — OperaTree works fully without them
+- No backup backend should be a required dependency
+- The filesystem layout must never be modified to accommodate a specific backend
+- All integration should be additive — existing projects must not need migration
+
+If you're working on this area, open an issue first to discuss the approach. This is a high-impact contribution surface and coordination matters.
 
 ---
 
@@ -293,20 +335,21 @@ OperaTree follows [Conventional Commits](https://www.conventionalcommits.org/):
 
 **Types:**
 
-| Type       | When to use                                             |
-| ---------- | ------------------------------------------------------- |
-| `feat`     | New feature or subject type                             |
-| `fix`      | Bug fix                                                 |
-| `docs`     | Documentation only                                      |
+| Type | When to use |
+|---|---|
+| `feat` | New feature or subject type |
+| `fix` | Bug fix |
+| `docs` | Documentation only |
 | `refactor` | Code change that neither fixes a bug nor adds a feature |
-| `test`     | Adding or updating tests                                |
-| `chore`    | Build process, dependencies, tooling                    |
+| `test` | Adding or updating tests |
+| `chore` | Build process, dependencies, tooling |
 
 **Examples:**
 
 ```
 feat(subject): add meeting subject type with agenda and MoM fields
 fix(find): resolve ambiguity between type filter and search term
+feat(cmd): add track and untrack commands
 docs(contributing): add template contribution guide
 refactor(search): extract walkModule into separate file
 ```
@@ -321,15 +364,17 @@ refactor(search): extract walkModule into separate file
 4. Run `make test` and ensure all tests pass
 5. Run `make build` and test manually with `operatree init` and relevant commands
 6. Commit using the convention above
-7. Open a PR against `main` with a clear description of what you changed and why
+7. Open a PR against `main` with a clear description of what changed and why
 
 **PR checklist:**
 
 - [ ] Follows existing code patterns and naming conventions
 - [ ] New subject types use `omitempty` on all type-specific fields
-- [ ] New commands registered in both `cmd/` and `ValidArgs`
+- [ ] New subject types added to `knownTypes` map
+- [ ] New commands registered in both `cmd/` and `ValidArgs` where applicable
 - [ ] README updated if user-facing behavior changed
 - [ ] No hardcoded paths or test-specific defaults left in code
+- [ ] Activity log called for any action that creates, edits, or archives a subject
 
 ---
 
