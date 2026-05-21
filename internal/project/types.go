@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	METADATA_FILE = "metadata.yml"
+	METADATA_FILE = "METADATA.yml"
 )
 
 type Project struct {

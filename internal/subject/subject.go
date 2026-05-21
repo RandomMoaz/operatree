@@ -11,6 +11,10 @@ import (
 type SubjectType string
 
 const (
+	METADATA_FILE = "METADATA.yml"
+)
+
+const (
 	SubjectEvent     SubjectType = "EVENT"
 	SubjectTask      SubjectType = "TASK"
 	SubjectTopic     SubjectType = "TOPIC"
@@ -109,7 +113,7 @@ func (s *Subject) WriteFiles() error {
 // Writes metadata.yml file for the subject at subject dir
 func (s *Subject) WriteMetadata() error {
 
-	fn := path.Join(s.DirName, "metadata.yml")
+	fn := path.Join(s.DirName, METADATA_FILE)
 	if err := filesystem.StructToFile(s, fn); err != nil {
 		return err
 	}
@@ -156,7 +160,7 @@ func (s *Subject) EditMetadata() error {
 
 	// run editor
 
-	fn := path.Join(s.DirName, "metadata.yml")
+	fn := path.Join(s.DirName, METADATA_FILE)
 	if err := runner.EditFile(fn); err != nil {
 		return err
 	}

@@ -29,7 +29,7 @@ func FactoryAdmin(ppth string) Module {
 
 func FactoryEvents(ppth string) Module {
 
-	n := "01_EVNTS"
+	n := "01_EVENTS"
 	m := Module{
 		Type:     ModuleEvents,
 		Name:     n,

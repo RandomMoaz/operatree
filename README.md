@@ -10,6 +10,18 @@ OperaTree is a CLI tool that brings structure, searchability, and intelligence t
 
 It works the way your OS already works: files and directories. Everything is human-readable, Git-friendly, and pipes naturally into standard UNIX tools.
 
+**Setup**
+
+![demo](demo/operatree-demo-1-setup.gif)
+
+**Working with Subjects**
+
+![demo](demo/operatree-demo-2-creating.gif)
+
+**Power Features**
+
+![demo](demo/operatree-demo-3-power.gif)
+
 ---
 
 ## Philosophy
@@ -160,31 +172,33 @@ operatree untrack                 # remove current directory project from tracke
 
 ## Commands
 
-| Command | Description |
-|---|---|
-| `operatree init` | Initialize OperaTree configuration |
-| `operatree bootstrap [name]` | Bootstrap a new project |
-| `operatree new [type]` | Create a new subject interactively |
-| `operatree find [type] [term]` | Fuzzy-find subjects across all metadata |
-| `operatree metadata [type] [term]` | Find a subject and open its metadata in editor |
-| `operatree open [type] [term]` | Find a subject and open its directory in file manager |
-| `operatree sync` | Sync project metadata with subject files on disk |
-| `operatree track` | Add current project to tracked list |
-| `operatree untrack` | Remove current project from tracked list |
-| `operatree default` | Set default project interactively |
-| `operatree desc` | Describe project structure |
-| `operatree summary` | Project summary with counts and status |
-| `operatree explain` | Print directory philosophy guide |
-| `operatree version` | Print version, commit, and build date |
+| Command                            | Description                                           |
+| ---------------------------------- | ----------------------------------------------------- |
+| `operatree init`                   | Initialize OperaTree configuration                    |
+| `operatree bootstrap [name]`       | Bootstrap a new project                               |
+| `operatree new [type]`             | Create a new subject interactively                    |
+| `operatree find [type] [term]`     | Fuzzy-find subjects across all metadata               |
+| `operatree metadata [type] [term]` | Find a subject and open its metadata in editor        |
+| `operatree open [type] [term]`     | Find a subject and open its directory in file manager |
+| `operatree sync`                   | Sync project metadata with subject files on disk      |
+| `operatree track`                  | Add current project to tracked list                   |
+| `operatree untrack`                | Remove current project from tracked list              |
+| `operatree default`                | Set default project interactively                     |
+| `operatree desc`                   | Describe project structure                            |
+| `operatree summary`                | Project summary with counts and status                |
+| `operatree explain`                | Print directory philosophy guide                      |
+| `operatree version`                | Print version, commit, and build date                 |
 
 ### Flags
 
-| Flag | Command | Description |
-|---|---|---|
-| `-d, --dest` | all | Override project directory |
-| `--plain` | `desc` | Output raw YAML instead of styled view |
-| `--show` | `default` | Show current default project |
-| `-v, --verbose` | `bootstrap` | Print project structure after creation |
+| Flag            | Command     | Description                                     |
+| --------------- | ----------- | ----------------------------------------------- |
+| `-d, --dest`    | all         | Override project directory                      |
+| `--plain`       | `desc`      | Output raw YAML instead of styled view          |
+| `--show`        | `default`   | Show current default project                    |
+| `--name`        | `new`       | Sets name for subject and skips interactive CLI |
+| `--date`        | `new`       | Sets date for subject and skips interactive CLI |
+| `-v, --verbose` | `bootstrap` | Print project structure after creation          |
 
 ### Project Directory Resolution
 
@@ -200,12 +214,12 @@ When `-d` is not provided, OperaTree resolves the project directory in this orde
 
 A subject is any trackable unit of work or knowledge within a project.
 
-| Type | Purpose | Key Fields |
-|---|---|---|
-| `event` | A project activity — visit, workshop, meeting | date, location, participants, tags |
-| `task` | A unit of work with a lifecycle | owner, status, related events |
-| `topic` | A knowledge concept or domain area | tags, notes, related objective |
-| `objective` | A goal driving research and decisions | status, findings, strategy |
+| Type        | Purpose                                       | Key Fields                         |
+| ----------- | --------------------------------------------- | ---------------------------------- |
+| `event`     | A project activity — visit, workshop, meeting | date, location, participants, tags |
+| `task`      | A unit of work with a lifecycle               | owner, status, related events      |
+| `topic`     | A knowledge concept or domain area            | tags, notes, related objective     |
+| `objective` | A goal driving research and decisions         | status, findings, strategy         |
 
 All subjects share common fields: `name`, `date`, `tags`, `notes`. Type-specific fields use `omitempty` so they never appear in unrelated subjects.
 
@@ -279,7 +293,7 @@ Config lives at `~/.config/operatree/operatree.yaml`:
 
 ```yaml
 standardDir: /home/user/projects
-editor: nvim                        # fallback to $EDITOR if not set
+editor: nvim # fallback to $EDITOR if not set
 fileManager: nautilus
 default:
   name: myproject
@@ -300,14 +314,14 @@ daemon:
   dsn: ""
 ```
 
-| Field | Description |
-|---|---|
-| `standardDir` | Default base directory for new projects |
-| `editor` | Editor for `operatree metadata`. Falls back to `$EDITOR` |
-| `fileManager` | File manager for `operatree open` |
-| `default` | Default project used when `-d` is not provided |
-| `projects` | All tracked projects |
-| `daemon` | Future daemon configuration (reserved) |
+| Field         | Description                                              |
+| ------------- | -------------------------------------------------------- |
+| `standardDir` | Default base directory for new projects                  |
+| `editor`      | Editor for `operatree metadata`. Falls back to `$EDITOR` |
+| `fileManager` | File manager for `operatree open`                        |
+| `default`     | Default project used when `-d` is not provided           |
+| `projects`    | All tracked projects                                     |
+| `daemon`      | Future daemon configuration (reserved)                   |
 
 ---
 
@@ -325,13 +339,13 @@ OperaTree's filesystem-first design makes it naturally compatible with any versi
 
 **Layer 2 — The action:** what happens when a change is detected. Common strategies:
 
-| Strategy | Tool | Best for |
-|---|---|---|
-| Local version history | `git commit` | Full history, diffs, branching |
-| Local + remote backup | `git push` | Team sharing, offsite backup |
-| Directory sync | `rsync` | Mirror to another machine or drive |
-| Continuous sync | `syncthing` | Real-time multi-device sync without a server |
-| Cloud backup | `rclone` | S3, Google Drive, Dropbox, etc. |
+| Strategy              | Tool         | Best for                                     |
+| --------------------- | ------------ | -------------------------------------------- |
+| Local version history | `git commit` | Full history, diffs, branching               |
+| Local + remote backup | `git push`   | Team sharing, offsite backup                 |
+| Directory sync        | `rsync`      | Mirror to another machine or drive           |
+| Continuous sync       | `syncthing`  | Real-time multi-device sync without a server |
+| Cloud backup          | `rclone`     | S3, Google Drive, Dropbox, etc.              |
 
 ### Example: watchexec + git
 
@@ -360,14 +374,14 @@ Native integration with file watchers and version control backends is on the roa
 
 OperaTree is in active development. The foundation is filesystem-first and stable. Future layers will be built on top without breaking it.
 
-| Phase | Description | Status |
-|---|---|---|
-| CLI | Filesystem engine, YAML metadata, fuzzy search, interactive forms, activity log | 🚧 Alpha |
-| Version control integration | Native watchexec/git hooks, configurable watcher and action backends | 📋 Planned |
-| Index sidecar | SQLite mirror for fast queries, no filesystem writes | 📋 Planned |
-| Daemon | API over the index, sync engine, configuration-driven engine selection | 📋 Planned |
-| Semantic search | Embeddings and vector search over subject metadata | 📋 Planned |
-| Web platform | Multi-user, web UI, enterprise features (commercial) | 💡 Vision |
+| Phase                       | Description                                                                     | Status     |
+| --------------------------- | ------------------------------------------------------------------------------- | ---------- |
+| CLI                         | Filesystem engine, YAML metadata, fuzzy search, interactive forms, activity log | 🚧 Alpha   |
+| Version control integration | Native watchexec/git hooks, configurable watcher and action backends            | 📋 Planned |
+| Index sidecar               | SQLite mirror for fast queries, no filesystem writes                            | 📋 Planned |
+| Daemon                      | API over the index, sync engine, configuration-driven engine selection          | 📋 Planned |
+| Semantic search             | Embeddings and vector search over subject metadata                              | 📋 Planned |
+| Web platform                | Multi-user, web UI, enterprise features (commercial)                            | 💡 Vision  |
 
 ---
 

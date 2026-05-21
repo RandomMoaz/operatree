@@ -9,7 +9,7 @@
 # -------------------------------------------------------------------
 
 Output ./operatree-demo.gif
-Output ./operatree-demo.mp4
+# Output ./operatree-demo.mp4
 
 # -------------------------------------------------------------------
 # Terminal settings

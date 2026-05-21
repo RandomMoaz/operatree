@@ -24,7 +24,7 @@ func Sync(p *Project) error {
 func syncModule(m *module.Module) error {
 	// Sync subjects at this level
 	for j, s := range m.Subjects {
-		b, err := filesystem.ReadFile(path.Join(s.DirName, "metadata.yml"))
+		b, err := filesystem.ReadFile(path.Join(s.DirName, subject.METADATA_FILE))
 		if err != nil {
 			// subject file missing or unreadable — skip, don't abort
 			continue
