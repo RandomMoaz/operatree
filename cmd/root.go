@@ -35,7 +35,6 @@ func init() {
 	cfg = c
 
 	rootCmd.PersistentFlags().StringVarP(&prjDir, "dest", "d", "", "project directory")
-	// rootCmd.PersistentPreRunE = resolveProjectDir
 	rootCmd.PersistentPreRun = resolveProjectDir
 }
 
@@ -55,6 +54,7 @@ func resolveProjectDir(cmd *cobra.Command, args []string) {
 		"help":      true,
 		"explain":   true,
 		"default":   true,
+		"untrack":   true,
 	}
 	if noProjectCmds[cmd.Name()] {
 		return
@@ -67,7 +67,12 @@ func resolveProjectDir(cmd *cobra.Command, args []string) {
 
 	// 2. current dir has project metadata
 	if isProjectDir(".") {
-		prjDir = "."
+		// we need to resolve "." to full abs path
+		var err error
+		prjDir, err = os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+		}
 		return
 	}
 
@@ -83,7 +88,7 @@ func resolveProjectDir(cmd *cobra.Command, args []string) {
 
 	// 4. nothing — friendly error
 	// return fmt.Errorf("no project found. Use -d to specify one, or run 'operatree default' to set a default")
-	fmt.Errorf("no project found. Use -d to specify one, or run 'operatree default' to set a default")
+	// fmt.Errorf("no project found. Use -d to specify one, or run 'operatree default' to set a default")
 }
 
 func isProjectDir(path string) bool {

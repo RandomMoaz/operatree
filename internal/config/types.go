@@ -27,6 +27,6 @@ type Daemon struct {
 func (c *Config) ListProjects() {
 
 	for _, p := range c.Projects {
-		fmt.Println(p)
+		fmt.Printf("Project: %s - Path: %s\n", p.Name, p.AbsPath)
 	}
 }

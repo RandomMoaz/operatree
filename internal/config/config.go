@@ -1,8 +1,10 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"gopkg.in/yaml.v3"
 )
@@ -88,6 +90,29 @@ func AddProject(name, absPath, template string) error {
 		AbsPath:  absPath,
 		Template: template,
 	})
+
+	return Save(cfg)
+}
+
+// Removes project from tracked
+func RemoveProject(absPath string) error {
+
+	cfg, err := Load()
+	if err != nil {
+		return err
+	}
+
+	idx := slices.IndexFunc(cfg.Projects, func(p Project) bool {
+		return p.AbsPath == absPath
+	})
+
+	// project is not in tracked list
+	if idx == -1 {
+		return fmt.Errorf("current project is not into tracked list")
+	}
+
+	nps := slices.Delete(cfg.Projects, idx, idx+1)
+	cfg.Projects = nps
 
 	return Save(cfg)
 }
