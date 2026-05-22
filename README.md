@@ -383,6 +383,8 @@ OperaTree welcomes contributions. The most impactful areas for community contrib
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full architecture guide.
+
 ---
 
 ## License

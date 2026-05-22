@@ -22,18 +22,21 @@
 OperaTree is built on three foundational pillars:
 
 ### 1. **Filesystem-First**
+
 - The filesystem is the **single source of truth**
 - No database, no external dependencies for core functionality
 - All data lives in YAML files under project directories
 - Users own their data completely
 
 ### 2. **CLI is Just an Interface**
+
 - The CLI is a convenience layer, not a requirement
 - Your data remains valid and accessible even if the CLI breaks
 - Users can manipulate files directly with standard Unix tools
 - This ensures data longevity beyond the tool's lifetime
 
 ### 3. **Metadata Separation**
+
 - Each subject (Event, Task, Topic, Objective) has a `META.yaml` file
 - Metadata is searchable, filterable, and machine-readable
 - Content can live in the same directory alongside metadata
@@ -47,23 +50,23 @@ OperaTree is built on three foundational pillars:
 
 ```
 ┌──────────────────────────────────────────────────┐
-│          CLI Layer (cmd/)                         │
+│          CLI Layer (cmd/)                        │
 │  (Commands: new, find, metadata, archive, etc.)  │
 └──────────────────┬───────────────────────────────┘
                    │
 ┌──────────────────▼───────────────────────────────┐
-│       Business Logic Layer (internal/)            │
+│       Business Logic Layer (internal/)           │
 │  project, subject, module, metadata handling     │
 └──────────────────┬───────────────────────────────┘
                    │
 ┌──────────────────▼───────────────────────────────┐
-│       Persistence Layer (internal/)               │
+│       Persistence Layer (internal/)              │
 │  filesystem I/O, YAML serialization, config mgmt │
 └──────────────────┬───────────────────────────────┘
                    │
 ┌──────────────────▼───────────────────────────────┐
-│            Operating System                       │
-│         (Filesystem, File I/O)                    │
+│            Operating System                      │
+│         (Filesystem, File I/O)                   │
 └──────────────────────────────────────────────────┘
 ```
 
@@ -210,12 +213,14 @@ Subject Type (CLI)    Subject Type (Internal)    Module Type (Storage)
 ## Core Concepts
 
 ### 1. **Projects**
+
 - **What:** A collection of subjects organized into modules
 - **Storage:** `~/projects/myproject/` directory
 - **Metadata:** `METADATA.yml` in project root
 - **Structure:** Nested modules (dirs) containing subjects (subdirs)
 
 ### 2. **Modules**
+
 - **What:** Directories that organize subjects by category
 - **Types:**
   - `00_ADMIN` — Governance, contacts, templates
@@ -231,6 +236,7 @@ Subject Type (CLI)    Subject Type (Internal)    Module Type (Storage)
 - **Nesting:** Some modules contain submodules (e.g., Tasks under Project Management)
 
 ### 3. **Subjects**
+
 - **What:** Trackable units of work or knowledge
 - **Types:**
   - `Event` — Project activity (date, location, participants)
@@ -240,12 +246,14 @@ Subject Type (CLI)    Subject Type (Internal)    Module Type (Storage)
 - **Storage:** Each subject is a directory with `META.yaml`
 
 ### 4. **Metadata**
+
 - **What:** YAML file containing subject properties
 - **Location:** `subject-name/META.yaml`
 - **Format:** YAML (human-readable, version-control friendly)
 - **Editability:** Users can edit directly; sync updates project index
 
 ### 5. **Activity Log**
+
 - **What:** Append-only audit trail
 - **Location:** `project-root/activity.log`
 - **Format:** Tab-separated, pipe-friendly
@@ -260,6 +268,7 @@ Subject Type (CLI)    Subject Type (Internal)    Module Type (Storage)
 **Purpose:** Command-line interface, argument parsing, user interaction
 
 **Key Files:**
+
 - `root.go` — Cobra setup, global flags, project resolution
 - `new.go` — Create new subject (unified command)
 - `find.go` — Fuzzy search subjects
@@ -269,13 +278,14 @@ Subject Type (CLI)    Subject Type (Internal)    Module Type (Storage)
 - `sync.go` — Sync project metadata from disk
 
 **Patterns:**
+
 ```go
 // Typical command handler pattern
 func commandName(cmd *cobra.Command, args []string) {
     // 1. Load project
     p, err := project.Load(prjDir)
     if err != nil { log.Fatal(err) }
-    
+
     // 2. Call business logic
     if err := project.SomeFunction(&p, arg1, arg2); err != nil {
         log.Fatal(err)
@@ -286,6 +296,7 @@ func commandName(cmd *cobra.Command, args []string) {
 **Dependencies:** None on other CLI files; all depend on `internal/project`
 
 **How to Add a New Command:**
+
 1. Create `cmd/newcommand.go`
 2. Define `var newcommandCmd = &cobra.Command{...}`
 3. Add initialization in `init()` function
@@ -298,6 +309,7 @@ func commandName(cmd *cobra.Command, args []string) {
 **Purpose:** High-level project operations, orchestration
 
 **Key Files:**
+
 - `project.go` — Project struct methods (ProjectDir, Describe, WriteMetadata, Archive)
 - `types.go` — Project struct, SubjectModuleMap, project templates
 - `new_subject.go` — Create new subject (unified function)
@@ -312,6 +324,7 @@ func commandName(cmd *cobra.Command, args []string) {
 - `template_*.go` — Project templates (dev, general)
 
 **Core Type:**
+
 ```go
 type Project struct {
     Name     string          // e.g., "myproject"
@@ -325,15 +338,16 @@ type Project struct {
 **Key Patterns:**
 
 **Pattern 1: Unified Subject Creation**
+
 ```go
 // Single function with subject type parameter
 func NewSubject(p *Project, name, date string, st SubjectType) error {
     // Map subject type to module type
     tmt := SubjectModuleMap[st]
-    
+
     // Find module recursively
     tm, err := findModule(p.Modules, tmt)
-    
+
     // Create and persist subject
     s, err := subject.SubjectFactory(...)
     // ...
@@ -341,6 +355,7 @@ func NewSubject(p *Project, name, date string, st SubjectType) error {
 ```
 
 **Pattern 2: Search Index Building**
+
 ```go
 // BuildSearchDB recursively walks all modules and subjects
 // Returns []SearchDB (flattened list of all subjects with metadata)
@@ -353,6 +368,7 @@ for _, entry := range db {
 ```
 
 **Dependencies:**
+
 - `internal/subject` — Subject operations
 - `internal/module` — Module structure
 - `internal/filesystem` — File I/O
@@ -368,6 +384,7 @@ for _, entry := range db {
 **Key Concepts:**
 
 **Subject Types:**
+
 ```go
 type SubjectType string
 
@@ -380,6 +397,7 @@ const (
 ```
 
 **Subject Struct:**
+
 ```go
 type Subject struct {
     Type         SubjectType
@@ -397,6 +415,7 @@ type Subject struct {
 ```
 
 **Factory Pattern:**
+
 ```go
 // SubjectFactory creates a new subject with validation
 s, err := subject.SubjectFactory(initialSubject, modulePath, existingSubjects)
@@ -406,11 +425,13 @@ s, err := subject.SubjectFactory(initialSubject, modulePath, existingSubjects)
 ```
 
 **Key Operations:**
+
 - `SubjectFactory()` — Create new subject
 - `WriteToDisk()` — Persist to META.yaml
 - `Load()` — Load from META.yaml
 
 **Dependencies:**
+
 - `internal/filesystem` — File I/O
 - `internal/metadata` — YAML parsing
 
@@ -421,6 +442,7 @@ s, err := subject.SubjectFactory(initialSubject, modulePath, existingSubjects)
 **Purpose:** Directory structure organization, module types
 
 **Module Types:**
+
 ```go
 type ModuleType string
 
@@ -436,6 +458,7 @@ const (
 ```
 
 **Module Struct:**
+
 ```go
 type Module struct {
     Name     string
@@ -447,6 +470,7 @@ type Module struct {
 ```
 
 **Factory Functions:**
+
 ```go
 // Templates create module hierarchies
 module.FactoryAdmin(projectPath, prefix)      // Creates 00_ADMIN
@@ -456,6 +480,7 @@ module.FactoryProjectManagement(projectPath)  // Creates 02_PROJECT_MANAGEMENT w
 ```
 
 **Key Operations:**
+
 - `Bootstrap()` — Create module directories
 - `Load()` — Load subjects from disk
 - Nested structure support (for Tasks under ProjectManagement)
@@ -469,6 +494,7 @@ module.FactoryProjectManagement(projectPath)  // Creates 02_PROJECT_MANAGEMENT w
 **Config File Location:** `~/.config/operatree/operatree.yaml`
 
 **Config Structure:**
+
 ```yaml
 standardDir: /home/user/projects
 editor: nvim
@@ -487,6 +513,7 @@ projects:
 ```
 
 **Key Operations:**
+
 - `Load()` — Load config from disk
 - `Save()` — Persist config changes
 - `AddProject()` — Register new project
@@ -499,6 +526,7 @@ projects:
 **Purpose:** All filesystem operations encapsulated here
 
 **Key Operations:**
+
 - `CreateDir(path)` — Create directory
 - `ReadFile(path)` — Read file contents
 - `WriteFile(path, content)` — Write file
@@ -507,6 +535,7 @@ projects:
 - `FileExists(path)` — Check if file exists
 
 **Design:** Single responsibility — all filesystem I/O goes through this package. This makes it:
+
 - Easy to mock for testing
 - Centralized error handling
 - Potential for future enhancements (permissions, backups, etc.)
@@ -518,6 +547,7 @@ projects:
 **Purpose:** Log all user actions for audit and undo
 
 **Log Format:**
+
 ```
 timestamp    action   type       name              user@host         version
 2026-05-20T10:08:39Z   CREATE   event   "Cairo Visit"  hany@optiplex7040  v0.1.0
@@ -526,6 +556,7 @@ timestamp    action   type       name              user@host         version
 **Tab-separated columns:** timestamp, action, type, name, user@host, version
 
 **Key Operations:**
+
 - `Log(projectDir, action, type, name)` — Record action
 - Actions: CREATE, EDIT, DELETE, ARCHIVE
 
@@ -538,6 +569,7 @@ timestamp    action   type       name              user@host         version
 **Purpose:** Pretty-printing, colored output, terminal aesthetics
 
 **Key Functions:**
+
 - ANSI color codes (AnsiRed, AnsiGreen, AnsiBold, etc.)
 - Progress bars, status indicators
 - Formatted output for summary, describe
@@ -551,6 +583,7 @@ timestamp    action   type       name              user@host         version
 **Purpose:** Marshal/unmarshal YAML, metadata validation
 
 **Key Operations:**
+
 - YAML parsing using `gopkg.in/yaml.v3`
 - Struct ↔ YAML conversion
 - Tag handling (omitempty for type-specific fields)
@@ -562,6 +595,7 @@ timestamp    action   type       name              user@host         version
 **Purpose:** Execute external programs (editor, file manager, commands)
 
 **Examples:**
+
 - `runner.OpenInEditor(filePath, editorCmd)` — Open file in editor
 - `runner.OpenInFileManager(dirPath, fmCmd)` — Open directory in file manager
 
@@ -576,11 +610,13 @@ timestamp    action   type       name              user@host         version
 **Steps:**
 
 1. **Define Subject Type** (`internal/subject/types.go`):
+
 ```go
 const SubjectMytype SubjectType = "mytype"
 ```
 
 2. **Add to Module Mapping** (`internal/project/types.go`):
+
 ```go
 var SubjectModuleMap = map[subject.SubjectType]module.ModuleType{
     // ... existing
@@ -589,6 +625,7 @@ var SubjectModuleMap = map[subject.SubjectType]module.ModuleType{
 ```
 
 3. **Add CLI Integration** (`cmd/new.go`):
+
 ```go
 var argToSubject map[string]subject.SubjectType = map[string]subject.SubjectType{
     // ... existing
@@ -597,6 +634,7 @@ var argToSubject map[string]subject.SubjectType = map[string]subject.SubjectType
 ```
 
 4. **Add Module Template** (`internal/module/factory.go`):
+
 ```go
 func FactoryMyModule(projectPath, prefix string) Module {
     return Module{
@@ -610,6 +648,7 @@ func FactoryMyModule(projectPath, prefix string) Module {
 ```
 
 5. **Update Project Templates** (`internal/project/template_dev.go`):
+
 ```go
 p := Project{
     // ...
@@ -621,6 +660,7 @@ p := Project{
 ```
 
 6. **Test it:**
+
 ```bash
 operatree new mytype --name "My New Type"
 ```
@@ -632,6 +672,7 @@ operatree new mytype --name "My New Type"
 **Steps:**
 
 1. **Create Command File** (`cmd/mycommand.go`):
+
 ```go
 package cmd
 
@@ -648,7 +689,7 @@ func runMyCommand(cmd *cobra.Command, args []string) {
     // Load project
     p, err := project.Load(prjDir)
     if err != nil { log.Fatal(err) }
-    
+
     // Call business logic
     if err := project.MyFunction(&p); err != nil {
         log.Fatal(err)
@@ -662,6 +703,7 @@ func init() {
 ```
 
 2. **Add Business Logic** (`internal/project/myfunction.go`):
+
 ```go
 func MyFunction(p *Project) error {
     // Implementation
@@ -672,6 +714,7 @@ func MyFunction(p *Project) error {
 3. **Wire Together** — The `init()` function in your cmd file adds the command to rootCmd
 
 4. **Test:**
+
 ```bash
 operatree mycommand
 ```
@@ -683,6 +726,7 @@ operatree mycommand
 **Search Logic Location:** `internal/project/search_builder.go`
 
 **How It Works:**
+
 ```go
 // BuildSearchDB creates a flattened searchable index
 // Each entry contains: subject data + concatenated metadata string
@@ -698,6 +742,7 @@ func BuildSearchDB(p *Project) []SearchDB {
 ```
 
 **To Enhance Search:**
+
 1. Add new fields to concatenation in `BuildSearchDB()`
 2. Or implement advanced ranking in `FindSubjects()`
 
@@ -733,14 +778,14 @@ func processModule(m *module.Module) error {
             return err
         }
     }
-    
+
     // Recurse into submodules
     for i := range m.Modules {
         if err := processModule(&m.Modules[i]); err != nil {
             return err
         }
     }
-    
+
     return nil
 }
 ```
@@ -772,7 +817,7 @@ if err := activitylog.Log(...); err != nil {
 for i := range modules {
     // Take pointer to actual element, not loop variable copy
     ptr := &modules[i]
-    
+
     // Now mutations to ptr persist to the slice
     ptr.Subjects = append(ptr.Subjects, newSubject)
 }
@@ -800,19 +845,20 @@ operatree/
 ### Test Patterns
 
 **1. Unit Tests (Logic)**
+
 ```go
 func TestNewSubject(t *testing.T) {
     // Arrange: Set up project
     p := createTestProject()
-    
+
     // Act: Call function
     err := project.NewSubject(&p, "Test", "2026-05-22", subject.SubjectEvent)
-    
+
     // Assert: Check results
     if err != nil {
         t.Fatalf("unexpected error: %v", err)
     }
-    
+
     // Verify side effects
     if len(p.Modules[0].Subjects) != 1 {
         t.Errorf("expected 1 subject, got %d", len(p.Modules[0].Subjects))
@@ -821,17 +867,18 @@ func TestNewSubject(t *testing.T) {
 ```
 
 **2. Integration Tests (Filesystem)**
+
 ```go
 func TestProjectPersistence(t *testing.T) {
     // Create temp directory
     tmpDir := t.TempDir()
-    
+
     // Create project
     p, err := project.Bootstrap("test", tmpDir, "dev")
     if err != nil {
         t.Fatalf("failed to bootstrap: %v", err)
     }
-    
+
     // Verify files exist
     if _, err := os.Stat(path.Join(p.ProjectDir(), "METADATA.yml")); err != nil {
         t.Errorf("metadata file not found: %v", err)
@@ -864,11 +911,13 @@ go test -v ./...
 **Cause:** Module not found in project structure
 
 **Debug Steps:**
+
 1. Check project template: `operatree desc`
 2. Verify module hierarchy is correct
 3. Check `internal/project/template_*.go` for module definitions
 
-**Fix:** 
+**Fix:**
+
 - Bootstrap project with correct template
 - Or manually add module to project directory
 
@@ -879,12 +928,13 @@ go test -v ./...
 **Cause:** Directory name collision
 
 **Debug Steps:**
+
 1. Check subject directory names: `ls -la module-dir/`
 2. Look at generated directory name logic
 
 **Fix:**
-- Rename existing subject
-- Or use different subject name to get different directory
+
+- Use different subject name to get different directory
 
 ---
 
@@ -893,11 +943,13 @@ go test -v ./...
 **Cause:** Malformed YAML in subject directory
 
 **Debug Steps:**
+
 1. Check subject's META.yaml: `cat subject-dir/META.yaml`
 2. Validate YAML syntax: `yamllint META.yaml`
 3. Check `internal/project/sync.go` logging
 
 **Fix:**
+
 - Fix YAML syntax manually
 - Delete and recreate subject
 - Run `operatree sync` to repair index
@@ -909,11 +961,13 @@ go test -v ./...
 **Cause:** Search index not built correctly
 
 **Debug Steps:**
+
 1. Check which fields are searchable in `internal/project/search_builder.go`
 2. Search should match: name, tags, participants, notes, date, location
 3. Verify metadata was synced: `operatree sync`
 
 **Fix:**
+
 - Run sync to rebuild index
 - Check subject metadata is complete
 - Try broader search terms
