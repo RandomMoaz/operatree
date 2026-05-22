@@ -4,10 +4,10 @@ import (
 	"log"
 
 	"github.com/hanymamdouh82/operatree/internal/project"
+	"github.com/hanymamdouh82/operatree/internal/subject"
 	"github.com/spf13/cobra"
 )
 
-var silent bool
 var subjectName string
 var subjectDate string
 
@@ -26,6 +26,15 @@ var newCmd = &cobra.Command{
 	Run:       newSubject,
 }
 
+var (
+	argToSubject map[string]subject.SubjectType = map[string]subject.SubjectType{
+		"event":     subject.SubjectEvent,
+		"task":      subject.SubjectTask,
+		"topic":     subject.SubjectTopic,
+		"objective": subject.SubjectObjective,
+	}
+)
+
 func newSubject(cmd *cobra.Command, args []string) {
 	a := args[0]
 	p, err := project.Load(prjDir)
@@ -33,28 +42,12 @@ func newSubject(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	switch a {
-	case "event":
-		if err := project.NewEvent(&p, subjectName, subjectDate); err != nil {
-			log.Fatal(err)
-		}
+	st, ok := argToSubject[a]
+	if !ok {
+		log.Fatal("unsupported subject type")
+	}
 
-	case "task":
-		if err := project.NewTask(&p, subjectName, subjectDate); err != nil {
-			log.Fatal(err)
-		}
-
-	case "topic":
-		if err := project.NewTopic(&p, subjectName, subjectDate); err != nil {
-			log.Fatal(err)
-		}
-
-	case "objective":
-		if err := project.NewObjective(&p, subjectName, subjectDate); err != nil {
-			log.Fatal(err)
-		}
-
-	default:
-		return
+	if err := project.NewSubject(&p, subjectName, subjectDate, st); err != nil {
+		log.Fatal(err)
 	}
 }
