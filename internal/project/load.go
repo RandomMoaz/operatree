@@ -30,6 +30,7 @@ func Load(pth string) (Project, error) {
 }
 
 func hydratePath(projectBaseDir string, p *Project) {
+	p.BaseDir = projectBaseDir
 	for i := range p.Modules {
 		hydrateModule(projectBaseDir, &p.Modules[i])
 	}

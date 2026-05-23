@@ -17,9 +17,11 @@ const (
 type Project struct {
 	Name     string          `yaml:"name"`
 	Template string          `yaml:"template"`
-	BaseDir  string          `yaml:"baseDir"`
+	BaseDir  string          `yaml:"-"`
 	Tags     []string        `yaml:"tags"`
 	Modules  []module.Module `yaml:"modules"`
+
+	// BaseDir  string          `yaml:"baseDir"`
 }
 
 // project templates map
