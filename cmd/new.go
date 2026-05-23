@@ -12,8 +12,10 @@ var subjectName string
 var subjectDate string
 
 func init() {
+	newCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
 	newCmd.Flags().StringVar(&subjectName, "name", "", "subject name")
 	newCmd.Flags().StringVar(&subjectDate, "date", "", "subject date")
+	newCmd.PreRun = resolveProjectDir
 	rootCmd.AddCommand(newCmd)
 }
 
@@ -37,7 +39,7 @@ var (
 
 func newSubject(cmd *cobra.Command, args []string) {
 	a := args[0]
-	p, err := project.Load(prjDir)
+	p, err := project.Load(actDir)
 	if err != nil {
 		log.Fatal(err)
 	}

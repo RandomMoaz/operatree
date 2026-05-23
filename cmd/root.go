@@ -4,19 +4,22 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/hanymamdouh82/operatree/internal/config"
-	"github.com/hanymamdouh82/operatree/internal/project"
 	"github.com/spf13/cobra"
 )
 
+const dFlagHelp_project = "project directory (default: default project, '.' for current dir, or an absolute path)"
+const dFlagHelp_baseDir = "base directory (default: config standardDir, '.' for current dir, or an absolute path)"
+
 var (
-	baseDir          string // abs base dir where project is located. Doesn't include project name
-	prjDir           string // abs path of project including its name
-	verbose          bool   // verbose flag
+	destDir          string
+	verbose          bool // verbose flag
 	cfg              config.Config
 	SubjectValidArgs []cobra.Completion = []cobra.Completion{"event", "task", "topic", "objective"}
+
+	// The actual dir will be used, all commands should use this variable only
+	actDir string
 )
 
 var rootCmd = &cobra.Command{
@@ -34,9 +37,6 @@ func init() {
 		log.Fatal(err)
 	}
 	cfg = c
-
-	rootCmd.PersistentFlags().StringVarP(&prjDir, "dest", "d", "", "project directory")
-	rootCmd.PersistentPreRun = resolveProjectDir
 }
 
 func Execute() {
@@ -44,51 +44,4 @@ func Execute() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-}
-
-func resolveProjectDir(cmd *cobra.Command, args []string) {
-	// commands that don't need a project dir
-	noProjectCmds := map[string]bool{
-		"init":      true,
-		"bootstrap": true,
-		"version":   true,
-		"help":      true,
-		"explain":   true,
-		"default":   true,
-		"untrack":   true,
-	}
-	if noProjectCmds[cmd.Name()] {
-		return
-	}
-
-	// 1. explicit -d flag
-	if prjDir != "" {
-		return
-	}
-
-	// 2. current dir has project metadata
-	if isProjectDir(".") {
-		// we need to resolve "." to full abs path
-		var err error
-		prjDir, err = os.Getwd()
-		if err != nil {
-			log.Fatal(err)
-		}
-		return
-	}
-
-	// 3. config default
-	cfg, err := config.Load()
-	if err != nil {
-		return
-	}
-	if cfg.Default.AbsPath != "" {
-		prjDir = cfg.Default.AbsPath
-		return
-	}
-}
-
-func isProjectDir(path string) bool {
-	_, err := os.Stat(filepath.Join(path, project.METADATA_FILE))
-	return err == nil
 }

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/hanymamdouh82/operatree/internal/project"
@@ -9,6 +8,8 @@ import (
 )
 
 func init() {
+	summaryCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
+	summaryCmd.PreRun = resolveProjectDir
 	rootCmd.AddCommand(summaryCmd)
 }
 
@@ -21,9 +22,7 @@ var summaryCmd = &cobra.Command{
 }
 
 func summary(cmd *cobra.Command, args []string) {
-	fmt.Printf("Default project: %s (%s)\n", cfg.Default.Name, cfg.Default.AbsPath)
-
-	p, err := project.Load(prjDir)
+	p, err := project.Load(actDir)
 	if err != nil {
 		log.Fatal(err)
 	}

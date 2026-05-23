@@ -8,6 +8,8 @@ import (
 )
 
 func init() {
+	findCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
+	findCmd.PreRun = resolveProjectDir
 	rootCmd.AddCommand(findCmd)
 }
 
@@ -21,7 +23,7 @@ var findCmd = &cobra.Command{
 
 func find(cmd *cobra.Command, args []string) {
 
-	p, err := project.Load(prjDir)
+	p, err := project.Load(actDir)
 	if err != nil {
 		log.Fatal(err)
 	}

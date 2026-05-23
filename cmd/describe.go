@@ -10,7 +10,9 @@ import (
 var plain bool
 
 func init() {
+	descCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
 	descCmd.Flags().BoolVarP(&plain, "plain", "p", false, "output raw YAML for piping")
+	descCmd.PreRun = resolveProjectDir
 	rootCmd.AddCommand(descCmd)
 }
 
@@ -23,7 +25,7 @@ var descCmd = &cobra.Command{
 }
 
 func describe(cmd *cobra.Command, args []string) {
-	p, err := project.Load(prjDir)
+	p, err := project.Load(actDir)
 	if err != nil {
 		log.Fatal(err)
 	}

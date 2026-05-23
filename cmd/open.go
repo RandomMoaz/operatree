@@ -9,6 +9,8 @@ import (
 )
 
 func init() {
+	openSubjectCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
+	openSubjectCmd.PreRun = resolveProjectDir
 	rootCmd.AddCommand(openSubjectCmd)
 }
 
@@ -21,7 +23,7 @@ var openSubjectCmd = &cobra.Command{
 }
 
 func openSubject(cmd *cobra.Command, args []string) {
-	p, err := project.Load(prjDir)
+	p, err := project.Load(actDir)
 	if err != nil {
 		log.Fatal(err)
 	}

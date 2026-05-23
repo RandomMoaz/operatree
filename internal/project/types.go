@@ -6,8 +6,12 @@ import (
 )
 
 const (
-	METADATA_FILE = "METADATA.yml"
-	ARCHIVED_DEST = "closed_tasks"
+	METADATA_FILE   = "METADATA.yml"
+	ARCHIVED_DEST   = "closed_tasks"
+	TMPLT_GENERAL   = "general"
+	TMPLT_DEV       = "dev"
+	TMPL_CONSULTING = "consulting"
+	TMPL_RESEARCH   = "research"
 )
 
 type Project struct {
@@ -21,9 +25,11 @@ type Project struct {
 // project templates map
 type tmpltMap map[string]func(name string, bpth string) Project
 
-var templates tmpltMap = tmpltMap{
-	"general": tmpltGeneral,
-	"dev":     tmpltDev,
+var Templates tmpltMap = tmpltMap{
+	TMPLT_GENERAL:   tmpltGeneral,
+	TMPLT_DEV:       tmpltDev,
+	TMPL_CONSULTING: tmpltConsulting,
+	TMPL_RESEARCH:   tmpltResearch,
 }
 
 // SubjectModuleMap maps each subject type to its corresponding storage module

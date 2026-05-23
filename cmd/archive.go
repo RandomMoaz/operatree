@@ -8,6 +8,8 @@ import (
 )
 
 func init() {
+	archiveCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
+	archiveCmd.PreRun = resolveProjectDir
 	rootCmd.AddCommand(archiveCmd)
 }
 
@@ -20,8 +22,7 @@ var archiveCmd = &cobra.Command{
 }
 
 func archiveSubject(cmd *cobra.Command, args []string) {
-
-	p, err := project.Load(prjDir)
+	p, err := project.Load(actDir)
 	if err != nil {
 		log.Fatal(err)
 	}

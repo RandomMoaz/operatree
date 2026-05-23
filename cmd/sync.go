@@ -8,6 +8,8 @@ import (
 )
 
 func init() {
+	syncCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
+	syncCmd.PreRun = resolveProjectDir
 	rootCmd.AddCommand(syncCmd)
 }
 
@@ -20,7 +22,7 @@ var syncCmd = &cobra.Command{
 }
 
 func sync(cmd *cobra.Command, args []string) {
-	p, err := project.Load(prjDir)
+	p, err := project.Load(actDir)
 	if err != nil {
 		log.Fatal(err)
 	}

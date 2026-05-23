@@ -8,6 +8,8 @@ import (
 )
 
 func init() {
+	metadataCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
+	metadataCmd.PreRun = resolveProjectDir
 	rootCmd.AddCommand(metadataCmd)
 }
 
@@ -20,7 +22,7 @@ var metadataCmd = &cobra.Command{
 }
 
 func editMetadata(cmd *cobra.Command, args []string) {
-	p, err := project.Load(prjDir)
+	p, err := project.Load(actDir)
 	if err != nil {
 		log.Fatal(err)
 	}

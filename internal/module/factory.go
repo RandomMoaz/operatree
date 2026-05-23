@@ -260,7 +260,7 @@ func FactoryMediaLib(ppth string, prfx string) Module {
 	return m
 }
 
-// Media Deliverables
+// Deliverables
 func FactoryDeliverables(ppth string, prfx string) Module {
 
 	n := fmt.Sprintf("%s_%s", prfx, "DELIVERABLES")
@@ -275,6 +275,26 @@ func FactoryDeliverables(ppth string, prfx string) Module {
 			"presentations",
 			"reports",
 			"submissions",
+		},
+	}
+
+	return m
+}
+
+// Publications
+func FactoryPublications(ppth string, prfx string) Module {
+
+	n := fmt.Sprintf("%s_%s", prfx, ModulePublications)
+	m := Module{
+		Type:     ModulePublications,
+		Name:     n,
+		AbsPath:  path.Join(ppth, n),
+		Modules:  []Module{},
+		Subjects: []subject.Subject{},
+		SubDirs: []string{
+			"drafts",
+			"review",
+			"published",
 		},
 	}
 

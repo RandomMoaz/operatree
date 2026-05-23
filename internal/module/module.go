@@ -28,6 +28,7 @@ const (
 	ModuleDataSources       ModuleType = "DATA_SOURCES"
 	ModuleMediaLibrary      ModuleType = "MEDIA_LIBRARY"
 	ModuleDeliverables      ModuleType = "DELIVERABLES"
+	ModulePublications      ModuleType = "PUBLICATIONS"
 	ModuleArchive           ModuleType = "ARCHIVE"
 )
 

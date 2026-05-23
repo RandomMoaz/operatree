@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"strings"
 
-	"github.com/hanymamdouh82/operatree/internal/config"
 	"github.com/hanymamdouh82/operatree/internal/project"
 	"github.com/spf13/cobra"
 )
@@ -12,15 +12,24 @@ import (
 var templateName string
 
 func init() {
-	cfg, _ := config.Load() // best effort, empty if no config yet
-	defaultDir := "."
-	if cfg.StandardDir != "" {
-		defaultDir = cfg.StandardDir
+	ts := make([]string, 0, len(project.Templates))
+	for k := range project.Templates {
+		ts = append(ts, k)
+	}
+	avts := strings.Join(ts, "|")
+	fth := fmt.Sprintf("project template: %s", avts)
+
+	bootstrapCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_baseDir)
+	bootstrapCmd.Flags().StringVarP(&templateName, "template", "t", "", fth)
+	bootstrapCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "show operation output")
+
+	if err := bootstrapCmd.MarkFlagRequired("template"); err != nil {
+		log.Fatal(err)
 	}
 
-	bootstrapCmd.Flags().StringVarP(&baseDir, "base", "b", defaultDir, "project base directory")
-	bootstrapCmd.Flags().StringVarP(&templateName, "template", "t", "general", "project template")
-	bootstrapCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "show operation output")
+	// -d flag here is used to define base dir not project dir
+	bootstrapCmd.PreRun = resolveBaseDir
+
 	rootCmd.AddCommand(bootstrapCmd)
 }
 
@@ -34,7 +43,7 @@ var bootstrapCmd = &cobra.Command{
 
 func bootstrap(cmd *cobra.Command, args []string) {
 	pn := args[0]
-	p, err := project.Bootstrap(pn, baseDir, templateName)
+	p, err := project.Bootstrap(pn, actDir, templateName)
 	if err != nil {
 		log.Fatal(err)
 	}

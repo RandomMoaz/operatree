@@ -3,13 +3,19 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/hanymamdouh82/operatree/internal/config"
 	"github.com/spf13/cobra"
 )
 
 func init() {
+	untrackCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
+	untrackCmd.PreRun = resolveProjectDir
+
+	if err := untrackCmd.MarkFlagRequired("dest"); err != nil {
+		log.Fatal(err)
+	}
+
 	rootCmd.AddCommand(untrackCmd)
 }
 
@@ -22,18 +28,12 @@ var untrackCmd = &cobra.Command{
 }
 
 func untrack(cmd *cobra.Command, args []string) {
+	fmt.Printf("destDir: %s\n", destDir)
+	fmt.Printf("actDir: %s\n", actDir)
 
-	if prjDir == "" {
-		cwd, err := os.Getwd()
-		if err != nil {
-			log.Fatal("cannot read current path")
-		}
-		prjDir = cwd
-	}
-
-	if err := config.RemoveProject(prjDir); err != nil {
+	if err := config.RemoveProject(actDir); err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("Project untracked: %s\n", prjDir)
+	fmt.Printf("Project untracked: %s\n", actDir)
 }

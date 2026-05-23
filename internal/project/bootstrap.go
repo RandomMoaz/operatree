@@ -22,7 +22,7 @@ func Bootstrap(name string, bpth string, t string) (Project, error) {
 	}
 
 	// get template factory from templates map
-	tf, ok := templates[t]
+	tf, ok := Templates[t]
 	if !ok {
 		return Project{}, fmt.Errorf("undefined template")
 	}
