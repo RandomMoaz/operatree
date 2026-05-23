@@ -46,7 +46,7 @@ func track(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	if err := config.AddProject(p.Name, p.ProjectDir(), p.Template); err != nil {
+	if err := config.AddProject(p.Name, p.BaseDir, p.Template); err != nil {
 		log.Fatal(err)
 	}
 
