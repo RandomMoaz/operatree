@@ -43,8 +43,6 @@ var bootstrapCmd = &cobra.Command{
 
 func bootstrap(cmd *cobra.Command, args []string) {
 
-	fmt.Printf("actDir: %s\n", actDir)
-
 	pn := args[0]
 	p, err := project.Bootstrap(pn, actDir, templateName)
 	if err != nil {

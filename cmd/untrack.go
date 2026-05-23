@@ -28,9 +28,6 @@ var untrackCmd = &cobra.Command{
 }
 
 func untrack(cmd *cobra.Command, args []string) {
-	fmt.Printf("destDir: %s\n", destDir)
-	fmt.Printf("actDir: %s\n", actDir)
-
 	if err := config.RemoveProject(actDir); err != nil {
 		log.Fatal(err)
 	}
