@@ -12,10 +12,21 @@ import (
 const configFile = "operatree.yaml"
 
 func configDir() (string, error) {
+
+	// Respect XDG_HOME_CONFIG as first-class
+	// This is a response for Github Issue
+	// https://github.com/hanymamdouh82/operatree/issues/2
+	xdgHome := os.Getenv("XDG_HOME_CONFIG")
+	if xdgHome != "" {
+		return filepath.Join(xdgHome, "operatree"), nil
+	}
+
+	// If not available, use Go standard os package to locate config dir
 	dir, err := os.UserConfigDir() // ~/.config on Linux, ~/Library/Application Support on Mac
 	if err != nil {
 		return "", err
 	}
+
 	return filepath.Join(dir, "operatree"), nil
 }
 
