@@ -329,7 +329,7 @@ func commandName(cmd *cobra.Command, args []string) {
 type Project struct {
     Name     string          // e.g., "myproject"
     Template string          // e.g., "dev"
-    BaseDir  string          // e.g., "/home/user/projects"
+	absDir   string          // project absolute directory, hydrated during load
     Tags     []string        // Project-level tags
     Modules  []module.Module // Top-level modules
 }
@@ -403,7 +403,7 @@ type Subject struct {
     Type         SubjectType
     Name         string
     Date         string
-    DirName      string  // Directory path
+    DirName      string  // Directory path, hydrated during load
     Tags         []string
     Notes        string
     Status       string  // For Task, Objective
@@ -463,7 +463,7 @@ const (
 type Module struct {
     Name     string
     Type     ModuleType
-    AbsPath  string         // Absolute filesystem path
+    AbsPath  string         // Absolute filesystem path, hydrated during load or bootstrap
     Subjects []Subject      // Subjects at this level
     Modules  []Module       // Nested submodules
 }
@@ -473,8 +473,8 @@ type Module struct {
 
 ```go
 // Templates create module hierarchies
-module.FactoryAdmin(projectPath, prefix)      // Creates 00_ADMIN
-module.FactoryEvents(projectPath, prefix)     // Creates 01_EVENTS
+module.FactoryAdmin(prefix)      // Creates 00_ADMIN
+module.FactoryEvents(prefix)     // Creates 01_EVENTS
 module.FactoryProjectManagement(projectPath)  // Creates 02_PROJECT_MANAGEMENT with Tasks submodule
 // ... etc
 ```
