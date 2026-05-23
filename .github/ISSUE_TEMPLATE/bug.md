@@ -2,7 +2,7 @@
 name: Bug
 about: General OperaTree bug
 title: "[BUG]"
-labels: ''
+labels: bug
 assignees: ''
 
 ---
