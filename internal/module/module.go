@@ -35,10 +35,12 @@ const (
 type Module struct {
 	Type     ModuleType        `yaml:"type"`
 	Name     string            `yaml:"name"`
-	AbsPath  string            `yaml:"absPath"`  // abs path of the module not relative to project. Important for subjects and standlone modules
+	AbsPath  string            `yaml:"-"`        // abs path of the module not relative to project. Important for subjects and standlone modules
 	Modules  []Module          `yaml:"modules"`  // use when subjects are nested into a sub-dir
 	Subjects []subject.Subject `yaml:"subjects"` // use when module contains direct subjects such as 01_EVENTS
 	SubDirs  []string          `yaml:"subDirs"`  // only flat dirs, they are not created initially by operatree, but can be created by Topic factory
+
+	// AbsPath  string            `yaml:"absPath"`  // abs path of the module not relative to project. Important for subjects and standlone modules
 }
 
 // A method to create module directory

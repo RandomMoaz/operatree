@@ -69,3 +69,29 @@ func resolveProjectDir(cmd *cobra.Command, args []string) {
 	// finally set the variable that all handlers depend on
 	actDir = cfg.Default.AbsPath
 }
+
+// This is to be used with any command that requires a project.
+// If -d is present, use it (resolve "." if it is the value)
+// If -d is not provided it fallback to cfg.DefaultProject
+// If -d is not provided and cfg.DefaultProject is set, error
+func resolveProjectDirSkippingConfig(cmd *cobra.Command, args []string) {
+
+	// 1. explicit -d flag -> user is responsible for correctness of -d value
+	if destDir != "" {
+
+		// the case of current working dir
+		if destDir == "." {
+			abs, err := os.Getwd()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			actDir = abs
+			return
+		}
+
+		actDir = destDir
+		return
+	}
+
+}

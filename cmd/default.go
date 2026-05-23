@@ -12,7 +12,7 @@ var showDefault bool
 func init() {
 	setDPCmd.Flags().BoolVar(&showDefault, "show", false, "show current default project")
 	setDPCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
-	setDPCmd.PreRun = resolveProjectDir
+	setDPCmd.PreRun = resolveProjectDirSkippingConfig
 	rootCmd.AddCommand(setDPCmd)
 }
 
@@ -25,6 +25,7 @@ var setDPCmd = &cobra.Command{
 }
 
 func setDefaultProject(cmd *cobra.Command, args []string) {
+
 	if showDefault {
 		config.ShowDefulatProject()
 		return

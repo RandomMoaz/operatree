@@ -55,7 +55,7 @@ var (
 type Subject struct {
 	Type    SubjectType `yaml:"type"`
 	Name    string      `yaml:"name"`
-	DirName string      `yaml:"dirName"`
+	DirName string      `yaml:"-"`
 	SubDirs []string    `yaml:"subDirs"`
 	Files   []string    `yaml:"-"`
 	Date    string      `yaml:"date"`
@@ -69,4 +69,6 @@ type Subject struct {
 	RelatedObjective string   `yaml:"related_objective,omitempty"`
 	RelatedEvents    []string `yaml:"related_events,omitempty"`
 	Outputs          []string `yaml:"outputs,omitempty"`
+
+	// DirName string      `yaml:"dirName"`
 }

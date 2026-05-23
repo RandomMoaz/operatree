@@ -25,6 +25,10 @@ var descCmd = &cobra.Command{
 }
 
 func describe(cmd *cobra.Command, args []string) {
+
+	// fmt.Printf("destDir: %s\n", destDir)
+	// fmt.Printf("actDir: %s\n", actDir)
+
 	p, err := project.Load(actDir)
 	if err != nil {
 		log.Fatal(err)
