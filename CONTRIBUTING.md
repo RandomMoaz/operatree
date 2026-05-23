@@ -251,6 +251,8 @@ for general purposes.
 
 **Step 1 — Create the template function**
 
+you should call `hydratePath`
+
 ```go
 // internal/project/template_<template_name>.go
 func tmpltResearch(name string, bpth string) Project {
@@ -260,13 +262,15 @@ func tmpltResearch(name string, bpth string) Project {
         Name:    name,
         BaseDir: bpth,
         Modules: []module.Module{
-            module.FactoryAdmin(ppth, "00"),
-            module.FactoryResearch(ppth, "01"),
-            module.FactoryData(ppth, "02"),
-            module.FactoryDeliverables(ppth, "03"),
-            module.FactoryArchive(ppth, "04"),
+            module.FactoryAdmin("00"),
+            module.FactoryResearch("01"),
+            module.FactoryData("02"),
+            module.FactoryDeliverables("03"),
+            module.FactoryArchive("04"),
         },
     }
+
+	hydratePath(ppth, &p)
 }
 ```
 
@@ -275,8 +279,8 @@ func tmpltResearch(name string, bpth string) Project {
 ```go
 // internal/project/types.go
 var templates tmpltMap = tmpltMap{
-	"general": tmpltGeneral,
-	"dev":     tmpltDev,
+	TMPLT_GENERAL:   tmpltGeneral,
+	TMPLT_DEV:       tmpltDev,
 }
 ```
 

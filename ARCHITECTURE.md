@@ -640,7 +640,6 @@ func FactoryMyModule(projectPath, prefix string) Module {
     return Module{
         Name: fmt.Sprintf("%s_MYMODULE", prefix),
         Type: ModuleMyModule,
-        AbsPath: path.Join(projectPath, name),
         Subjects: []Subject{},
         Modules: []Module{},
     }
@@ -654,7 +653,7 @@ p := Project{
     // ...
     Modules: []module.Module{
         // ... existing
-        module.FactoryMyModule(ppth, "09"),
+        module.FactoryMyModule("09"),
     },
 }
 ```
@@ -687,7 +686,7 @@ var mycommandCmd = &cobra.Command{
 
 func runMyCommand(cmd *cobra.Command, args []string) {
     // Load project
-    p, err := project.Load(prjDir)
+    p, err := project.Load(actDir)
     if err != nil { log.Fatal(err) }
 
     // Call business logic
