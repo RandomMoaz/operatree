@@ -27,9 +27,6 @@ func init() {
 		log.Fatal(err)
 	}
 
-	// -d flag here is used to define base dir not project dir
-	bootstrapCmd.PreRun = resolveBaseDir
-
 	rootCmd.AddCommand(bootstrapCmd)
 }
 
@@ -42,6 +39,8 @@ var bootstrapCmd = &cobra.Command{
 }
 
 func bootstrap(cmd *cobra.Command, args []string) {
+	// -d flag here is used to define base dir not project dir
+	resolveBaseDir(cmd, args)
 
 	pn := args[0]
 	p, err := project.Bootstrap(pn, actDir, templateName)

@@ -10,7 +10,6 @@ import (
 
 func init() {
 	untrackCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
-	untrackCmd.PreRun = resolveProjectDir
 
 	if err := untrackCmd.MarkFlagRequired("dest"); err != nil {
 		log.Fatal(err)
@@ -28,6 +27,8 @@ var untrackCmd = &cobra.Command{
 }
 
 func untrack(cmd *cobra.Command, args []string) {
+	resolveProjectDir(cmd, args)
+
 	if err := config.RemoveProject(actDir); err != nil {
 		log.Fatal(err)
 	}

@@ -63,7 +63,7 @@ func resolveProjectDir(cmd *cobra.Command, args []string) {
 	}
 
 	if cfg.Default.AbsPath == "" {
-		log.Fatal("-d is not provided and default is not set by operatree init")
+		log.Fatal("-d flag is not provided")
 	}
 
 	// finally set the variable that all handlers depend on

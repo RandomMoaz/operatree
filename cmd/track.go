@@ -9,13 +9,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var showTracked bool
-
 func init() {
-	trackCmd.Flags().BoolVar(&showTracked, "show", false, "show tracked projects")
-	trackCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
-	trackCmd.MarkFlagsOneRequired("dest", "show")
-	trackCmd.PreRun = resolveProjectDir
+	trackCmd.Flags().StringVarP(&destDir, "dest", "d", "", dFlagHelp_baseDir)
+
+	if err := trackCmd.MarkFlagRequired("dest"); err != nil {
+		log.Fatal(err)
+	}
+
 	rootCmd.AddCommand(trackCmd)
 }
 
@@ -28,16 +28,7 @@ var trackCmd = &cobra.Command{
 }
 
 func track(cmd *cobra.Command, args []string) {
-	// Load config
-	c, err := config.Load()
-	if err != nil {
-		log.Fatal(fmt.Errorf("cannot load config file. Use operatree init to initialize config"))
-	}
-
-	if showTracked {
-		c.ListProjects()
-		return
-	}
+	resolveProjectDir(cmd, args)
 
 	// load project to confirm its state
 	p, err := project.Load(actDir)
