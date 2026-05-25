@@ -1,0 +1,105 @@
+---
+name: dev
+description: for development projects
+modules:
+  - type: admin
+    name: admin
+    subDirs:
+      - contacts
+      - governance
+      - guidelines
+      - templates
+  - type: events
+    name: events
+    subDirs:
+  - type: project_management
+    name: project_management
+    modules:
+      - type: tasks
+        name: tasks
+        subDirs:
+    subDirs:
+      - budgets
+      - communications
+      - planning
+      - reports
+      - risks
+  - type: legal
+    name: legal
+    subDirs:
+      - contracts
+      - ndas
+      - compliance
+      - approvals
+      - templates
+  - type: research
+    name: research
+    modules:
+      - type: index
+        name: index
+      - type: topics
+        name: topics
+      - type: objectives
+        name: objectives
+      - type: summaries
+        name: summaries
+      - type: references
+        name: references
+        subDirs:
+          - articles
+          - books
+          - standards
+          - vendor_docs
+      - type: audio_notes
+        name: audio_notes
+        subDirs:
+          - raw
+          - transcriptions
+          - indexed
+      - type: attachements
+        name: attachements
+    subDirs:
+  - type: engineering
+    name: engineering
+    subDirs:
+      - architecture
+      - decisions
+      - diagrams
+      - prototypes
+      - simulations
+      - specifications
+      - templates
+  - type: data
+    name: data
+    modules:
+      - type: data_sources
+        name: sources
+    subDirs:
+      - 01_RAW
+      - 02_STAGING
+      - 03_PROCESSED
+      - 04_ANALYTICS
+      - 05_MODELS
+      - 06_EXPORTS
+      - 99_ARCHIVE
+  - type: media_library
+    name: media_library
+    subDirs:
+      - photos_clean
+      - videos
+      - diagrams
+      - presentation_assets
+      - branding
+  - type: deliverables
+    name: deliverables
+    subDirs:
+      - client_documents
+      - presentations
+      - reports
+      - submissions
+  - type: archive
+    name: archive
+    subDirs:
+      - old_versions
+      - closed_tasks
+      - deprecated

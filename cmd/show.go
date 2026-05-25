@@ -3,8 +3,10 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/hanymamdouh82/operatree/internal/config"
+	"github.com/hanymamdouh82/operatree/internal/template"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -13,11 +15,13 @@ func init() {
 	rootCmd.AddCommand(showCmd)
 }
 
+var va = []cobra.Completion{"tracked", "config", "templates"}
+
 var showCmd = &cobra.Command{
-	Use:       "show [tracked | config]",
+	Use:       fmt.Sprintf("show [%s]", strings.Join(va, " | ")),
 	Short:     "Show information about operatree",
 	Long:      "Shows information about operatree",
-	ValidArgs: []cobra.Completion{"tracked", "config"},
+	ValidArgs: va,
 	Args:      cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 	Run:       show,
 }
@@ -30,15 +34,18 @@ func show(cmd *cobra.Command, args []string) {
 	}
 
 	switch args[0] {
-	case "tracked":
+	case va[0]:
 		c.ListProjects()
 		return
-	case "config":
+	case va[1]:
 		b, err := yaml.Marshal(c)
 		if err != nil {
 			log.Fatal()
 		}
 		fmt.Printf("%s\n", b)
+	case va[2]:
+		template.ListTemplates()
+		return
 	default:
 		log.Fatal("unknow command")
 	}

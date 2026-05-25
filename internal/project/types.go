@@ -6,12 +6,8 @@ import (
 )
 
 const (
-	METADATA_FILE   = "METADATA.yml"
-	ARCHIVED_DEST   = "closed_tasks"
-	TMPLT_GENERAL   = "general"
-	TMPLT_DEV       = "dev"
-	TMPL_CONSULTING = "consulting"
-	TMPL_RESEARCH   = "research"
+	METADATA_FILE = "METADATA.yml"
+	ARCHIVED_DEST = "closed_tasks"
 )
 
 type Project struct {
@@ -20,18 +16,6 @@ type Project struct {
 	absDir   string          `yaml:"-"` // project absolute directory, hydrated during load
 	Tags     []string        `yaml:"tags"`
 	Modules  []module.Module `yaml:"modules"`
-
-	// BaseDir  string          `yaml:"baseDir"`
-}
-
-// project templates map
-type tmpltMap map[string]func(name string) Project
-
-var Templates tmpltMap = tmpltMap{
-	TMPLT_GENERAL:   tmpltGeneral,
-	TMPLT_DEV:       tmpltDev,
-	TMPL_CONSULTING: tmpltConsulting,
-	TMPL_RESEARCH:   tmpltResearch,
 }
 
 // SubjectModuleMap maps each subject type to its corresponding storage module

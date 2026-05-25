@@ -1,0 +1,44 @@
+---
+name: general
+description: for general use, the minimal template for organized work
+modules:
+  - type: admin
+    name: admin
+    subDirs:
+      - contacts
+      - governance
+      - guidelines
+      - templates
+  - type: events
+    name: events
+    subDirs:
+  - type: project_management
+    name: project_management
+    modules:
+      - type: tasks
+        name: tasks
+        subDirs:
+    subDirs:
+      - budgets
+      - planning
+      - reports
+  - type: media_library
+    name: media_library
+    subDirs:
+      - photos_clean
+      - videos
+      - diagrams
+      - presentation_assets
+  - type: deliverables
+    name: deliverables
+    subDirs:
+      - client_documents
+      - presentations
+      - reports
+      - submissions
+  - type: archive
+    name: archive
+    subDirs:
+      - old_versions
+      - closed_tasks
+      - deprecated

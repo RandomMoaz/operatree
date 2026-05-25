@@ -1,0 +1,78 @@
+---
+name: dev
+description: for academic work, R&D, and analytical projects.
+modules:
+  - type: admin
+    name: admin
+    subDirs:
+      - contacts
+      - governance
+      - guidelines
+      - templates
+  - type: events
+    name: events
+    subDirs:
+  - type: project_management
+    name: project_management
+    modules:
+      - type: tasks
+        name: tasks
+        subDirs:
+    subDirs:
+      - communications
+      - planning
+      - reports
+  - type: legal
+    name: legal
+    subDirs:
+      - contracts
+      - ndas
+      - compliance
+      - approvals
+      - templates
+  - type: research
+    name: research
+    modules:
+      - type: index
+        name: index
+      - type: topics
+        name: topics
+      - type: objectives
+        name: objectives
+      - type: summaries
+        name: summaries
+      - type: references
+        name: references
+        subDirs:
+          - articles
+          - books
+          - standards
+          - vendor_docs
+      - type: audio_notes
+        name: audio_notes
+        subDirs:
+          - raw
+          - transcriptions
+          - indexed
+      - type: attachements
+        name: attachements
+    subDirs:
+  - type: publications
+    name: publications
+    subDirs:
+      - drafts
+      - review
+      - published
+  - type: deliverables
+    name: deliverables
+    subDirs:
+      - client_documents
+      - presentations
+      - reports
+      - submissions
+  - type: archive
+    name: archive
+    subDirs:
+      - old_versions
+      - closed_tasks
+      - deprecated

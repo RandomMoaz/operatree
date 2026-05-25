@@ -6,6 +6,7 @@ import (
 
 	"github.com/hanymamdouh82/operatree/internal/config"
 	"github.com/hanymamdouh82/operatree/internal/filesystem"
+	"github.com/hanymamdouh82/operatree/internal/template"
 )
 
 // Bootstraps a project by creating project struct and call bootstrap modules
@@ -22,13 +23,23 @@ func Bootstrap(name string, bpth string, t string) (Project, error) {
 		return Project{}, fmt.Errorf("project bath is missing, either -d is missing value or init is not used")
 	}
 
-	// get template factory from templates map
-	tf, ok := Templates[t]
+	// get template file name from provided template name using tmpltMap
+	tn, ok := template.Templates[t]
 	if !ok {
 		return Project{}, fmt.Errorf("undefined template")
 	}
-	np := tf(name)
-	np.Template = t
+
+	// load template file
+	pt, err := template.Load(tn)
+	if err != nil {
+		return Project{}, fmt.Errorf("undefined template file")
+	}
+
+	// run factory -> converts template to Project struct
+	np, err := Factory(pt, name)
+	if err != nil {
+		return np, err
+	}
 
 	// path hydration:
 	// Walk project, subjects, modules, nested modules and injects AbsPath, DirName

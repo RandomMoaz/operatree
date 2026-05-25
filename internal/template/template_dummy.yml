@@ -1,0 +1,19 @@
+---
+name: dummy
+description: dummy description
+modules:
+  - type: admin
+    name: admin
+    description: admin description
+    modules: []
+    subDirs:
+      - sub1
+  - type: project_management
+    name: project_management
+    description: project_management description
+    modules:
+      - type: tasks
+        name: tasks
+        description: tasks description
+        subDirs:
+          - sub2

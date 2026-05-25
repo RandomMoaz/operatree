@@ -27,6 +27,33 @@ const (
 	ModuleArchive           ModuleType = "ARCHIVE"
 )
 
+type ModuleDirPrefix map[ModuleType]string
+
+var (
+	ModuleDirPrefixMap ModuleDirPrefix = ModuleDirPrefix{
+		ModuleAdmin:             "00",
+		ModuleEvents:            "01",
+		ModuleProjectManagement: "02",
+		ModuleLegal:             "03",
+		ModuleResearch:          "04",
+		ModuleEngineering:       "05",
+		ModuleData:              "06",
+		ModuleTasks:             "05",
+		ModuleIndex:             "06",
+		ModuleTopics:            "07",
+		ModuleObjectives:        "08",
+		ModuleSummaries:         "09",
+		ModuleReferences:        "10",
+		ModuleAudioNotes:        "11",
+		ModuleAttachements:      "12",
+		ModuleDataSources:       "13",
+		ModulePublications:      "14",
+		ModuleMediaLibrary:      "97",
+		ModuleDeliverables:      "98",
+		ModuleArchive:           "99",
+	}
+)
+
 type Module struct {
 	Type     ModuleType        `yaml:"type"`
 	Name     string            `yaml:"name"`

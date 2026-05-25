@@ -90,6 +90,7 @@ operatree/
 │   ├── find.go             # operatree find
 │   ├── help.go             # operatree help
 │   ├── init.go             # operatree init
+│   ├── jump.go             # operatree jump
 │   ├── metadata.go         # operatree metadata
 │   ├── new.go              # operatree new
 │   ├── open.go             # operatree open
@@ -109,6 +110,7 @@ operatree/
 │   ├── project/            # project struct, bootstrap, search, describe, sync
 │   ├── runner/             # external binaries runner
 │   ├── subject/            # subject struct, factory, interactive CLI
+│   ├── templates/          # templates yaml files, template loaders, listing, descriptions
 │   └── ui/                 # ui utilities
 ├── demo/                   # VHS tape and recorded demo
 ├── LICENSE
@@ -246,41 +248,65 @@ That's it. No core changes, no breaking changes, no migration needed. Existing `
 
 ### Adding a Project Template
 
-Templates define what a bootstrapped project looks like. The current templates are `dev` — designed for software development companies, and `general`
-for general purposes.
+Templates define what a bootstrapped project looks like. The current templates are:
 
-**Step 1 — Create the template function**
+- `dev`: designed for software development companies
+- `general`: designed to general purpose and minimal project structre
+- `consulting`: for client engagement work
+- `research`: for academic work, R&D, and analytical projects.
 
-you should call `hydratePath`
+**IMPORTANT**
 
-```go
-// internal/project/template_<template_name>.go
-func tmpltResearch(name string, bpth string) Project {
-    ppth := path.Join(bpth, name)
+adding new template should follow approval process. Since the primary goal of `OperaTree` is to align with Porject Management standards,
+adding a new template and its included modules should be discussed first for its feasibility and business adapatability. To propose a new template,
 
-    return Project{
-        Name:    name,
-        BaseDir: bpth,
-        Modules: []module.Module{
-            module.FactoryAdmin("00"),
-            module.FactoryResearch("01"),
-            module.FactoryData("02"),
-            module.FactoryDeliverables("03"),
-            module.FactoryArchive("04"),
-        },
-    }
+contributor should provide
 
-	hydratePath(ppth, &p)
-}
+- a clear explanation for template
+- proposed full template yaml file with all descriptions clearly included
+- reason for included modules and subdirs
+- outcomes of the template
+- target audience.
+
+Any PR for a new template without linked discussion will be rejected.
+
+After approval on template, follow the steps:
+
+**Step 1 — Create the template file**
+
+```yml
+---
+# /internal/templates/template_<name>.yml
+name: dummy
+description: dummy description
+modules:
+  - type: admin
+    name: admin
+    description: admin description
+    modules: []
+    subDirs:
+      - sub1
+  - type: project_management
+    name: project_management
+    description: project_management description
+    modules:
+      - type: tasks
+        name: tasks
+        description: tasks description
+        subDirs:
+          - sub2
 ```
 
 **Step 2 — Register in the template map**
 
 ```go
-// internal/project/types.go
-var templates tmpltMap = tmpltMap{
-	TMPLT_GENERAL:   tmpltGeneral,
-	TMPLT_DEV:       tmpltDev,
+// internal/templates/types.go
+var Templates tmpltMap = tmpltMap{
+	"general":           "template_general.yml",
+	"dev":               "template_dev.yml",
+	"consulting":        "template_consulting.yml",
+	"research":          "template_research.yml",
+	"<template_name>":   "template_<template_name>.yml",
 }
 ```
 

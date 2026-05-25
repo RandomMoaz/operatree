@@ -6,6 +6,7 @@ require (
 	github.com/charmbracelet/glamour v1.0.0
 	github.com/charmbracelet/huh v1.0.0
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
+	github.com/google/go-cmp v0.7.0
 	github.com/ktr0731/go-fuzzyfinder v0.9.0
 	github.com/lithammer/fuzzysearch v1.1.8
 	github.com/spf13/cobra v1.10.2

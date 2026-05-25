@@ -6,14 +6,15 @@ import (
 	"strings"
 
 	"github.com/hanymamdouh82/operatree/internal/project"
+	"github.com/hanymamdouh82/operatree/internal/template"
 	"github.com/spf13/cobra"
 )
 
 var templateName string
 
 func init() {
-	ts := make([]string, 0, len(project.Templates))
-	for k := range project.Templates {
+	ts := make([]string, 0, len(template.Templates))
+	for k := range template.Templates {
 		ts = append(ts, k)
 	}
 	avts := strings.Join(ts, "|")
