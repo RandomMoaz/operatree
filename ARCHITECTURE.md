@@ -70,7 +70,7 @@ OperaTree is built on three foundational pillars:
 ┌──────────────────▼───────────────────────────────┐
 │            Operating System                      │
 │         (Filesystem, File I/O)                   │
-└──────────────────────────────────────────────────┘
+└────────────────────────────────────────��─────────┘
 ```
 
 ### Component Relationships
@@ -79,8 +79,8 @@ OperaTree is built on three foundational pillars:
 User Command (e.g., "operatree new event --name 'Cairo Visit'")
         │
         ├─→ cmd/new.go (CLI command handler)
-        │   ├─ Parse "event" argument (lowercase)
-        │   ├─ Map to SubjectType constant (UPPERCASE: "EVENT")
+        │   ├─ Parse "event" argument (lowercase CLI input)
+        │   ├─ Convert to SubjectType constant (UPPERCASE: "EVENT")
         │   ├─ Resolve project directory (-d flag)
         │   └─ Call project.NewSubject()
         │
@@ -107,7 +107,7 @@ User Command (e.g., "operatree new event --name 'Cairo Visit'")
 operatree/
 ├── cmd/                    # CLI commands (11 files)
 │   ├── root.go            # Cobra setup, global flags, project resolution
-│   ├── new.go             # Create new subject
+│   ├── new.go             # Create new subject (DYNAMIC subject type loading)
 │   ├── find.go            # Search subjects
 │   ├── bootstrap.go       # Create new project
 │   ├── sync.go            # Sync metadata from disk
@@ -193,7 +193,8 @@ User Input: operatree new event --name "Cairo Visit" --date "2026-05-22" -d ~/my
 │
 ├─→ cmd/new.go :: newSubject()
 │   ├─ Get argument: "event" (lowercase from CLI)
-│   ├─ Map via argToSubject: "event" → SubjectEvent ("EVENT")
+│   ├─ Convert to uppercase: "event" → "EVENT"
+│   ├─ Create SubjectType constant: subject.SubjectType("EVENT")
 │   ├─ Load project from actDir
 │   └─ Call project.NewSubject(&p, "Cairo Visit", "2026-05-22", SubjectEvent)
 │
@@ -233,39 +234,59 @@ User Input: operatree new event --name "Cairo Visit" --date "2026-05-22" -d ~/my
 
 ### Subject Type Conversion Flow
 
-**Critical Detail:** Subject types have **two representations**:
+**Key Detail:** Subject types have **two representations** and use **dynamic loading**:
 
 ```
 CLI Argument          Internal Constant     Storage Module Type
-─────────────         ─────────────────     ───────────────────
+─────────────         ─────────────────     ───────��───────────
 "event"    (lower)  → SubjectEvent("EVENT") → ModuleEvents
 "task"     (lower)  → SubjectTask("TASK")   → ModuleTasks
 "topic"    (lower)  → SubjectTopic("TOPIC") → ModuleTopics
 "objective"(lower)  → SubjectObjective("OBJECTIVE") → ModuleObjectives
 ```
 
-**Conversion happens in `cmd/new.go`:**
+**Dynamic Loading in `cmd/new.go`:**
 
 ```go
-// cmd/root.go defines what CLI accepts
-SubjectValidArgs = []cobra.Completion{"event", "task", "topic", "objective"}
+func init() {
+    // Build completion slice DYNAMICALLY from SubjectModuleMap
+    // This means adding a new subject type automatically updates the CLI!
+    for k := range project.SubjectModuleMap {
+        sn := strings.ToLower(string(k))
+        validSubjects = append(validSubjects, sn)
+    }
 
-// cmd/new.go maps CLI args to internal constants
-argToSubject = map[string]subject.SubjectType{
-    "event":     subject.SubjectEvent,     // "EVENT"
-    "task":      subject.SubjectTask,      // "TASK"
-    "topic":     subject.SubjectTopic,     // "TOPIC"
-    "objective": subject.SubjectObjective, // "OBJECTIVE"
+    newCmd = &cobra.Command{
+        Use:       fmt.Sprintf("new [%s]", strings.Join(validSubjects, " | ")),
+        ValidArgs: validSubjects,  // Dynamically populated
+        Args:      cobra.MatchAll(cobra.OnlyValidArgs, cobra.ExactArgs(1)),
+        Run:       newSubject,
+    }
 }
 
-// internal/project/types.go maps subjects to modules
-SubjectModuleMap = map[subject.SubjectType]module.ModuleType{
+func newSubject(cmd *cobra.Command, args []string) {
+    a := args[0]           // "event" from CLI
+    st := strings.ToUpper(a)  // "EVENT"
+    
+    // Convert to SubjectType constant
+    if err := project.NewSubject(&p, subjectName, subjectDate, subject.SubjectType(st)); err != nil {
+        log.Fatal(err)
+    }
+}
+```
+
+**Mapping Logic in `internal/project/types.go`:**
+
+```go
+var SubjectModuleMap = map[subject.SubjectType]module.ModuleType{
     subject.SubjectEvent:     module.ModuleEvents,
     subject.SubjectTask:      module.ModuleTasks,
     subject.SubjectTopic:     module.ModuleTopics,
     subject.SubjectObjective: module.ModuleObjectives,
 }
 ```
+
+**Key Advantage:** When you add a new subject type, the CLI command automatically recognizes it without code changes!
 
 ---
 
@@ -396,7 +417,7 @@ func hydrateModule(m *module.Module) {
 **Key Files:**
 
 - **`root.go`** — Cobra setup, global flags, config loading, path resolution
-  - Defines `SubjectValidArgs` (static list of valid subject types)
+  - Loads configuration at startup
   - Defines global variables: `destDir`, `actDir`, `cfg`, `verbose`
   - Sets up root command
 
@@ -406,9 +427,10 @@ func hydrateModule(m *module.Module) {
   - `resolveProjectDirSkippingConfig()` — Ignores config, only uses explicit flags
 
 - **`new.go`** — Create new subject
-  - Maps CLI arguments to `SubjectType` constants via `argToSubject` map
+  - **DYNAMICALLY loads valid subject types** from `project.SubjectModuleMap`
+  - Converts CLI argument (lowercase) to SubjectType constant (uppercase)
   - Calls `project.NewSubject()` with subject type
-  - **Important:** Uses static `argToSubject` map, NOT dynamic loading
+  - **No static map needed** — automatically picks up new subject types!
 
 - **`bootstrap.go`** — Create new project
   - Takes project name and template name
@@ -443,7 +465,7 @@ func hydrateModule(m *module.Module) {
   - Removes project from config
   - Requires `-d` flag
 
-**Command Patterns:**
+**Command Pattern:**
 
 ```go
 // Typical command handler pattern
@@ -547,7 +569,7 @@ type Project struct {
 ```go
 // Create new subject - orchestration function
 func NewSubject(p *Project, subjectName, subjectDate string, st subject.SubjectType) error {
-    // 1. Validate subject type
+    // 1. Validate subject type exists in map
     tmt, exists := SubjectModuleMap[st]
     if !exists {
         return fmt.Errorf("unsupported subject type: %s", string(st))
@@ -588,7 +610,6 @@ func NewSubject(p *Project, subjectName, subjectDate string, st subject.SubjectT
   - Metadata file constant: `METADATA_FILE = "METADATA.yml"`
   - **`SubDirs` map** — Defines default subdirectories created for each subject type
   - **`Files` map** — Defines default files created for each subject type
-  - Type definitions and subject-specific field structs
 
 - **`subject.go`** — Subject operations
   - `MkDir()` — Create subject directory
@@ -920,31 +941,55 @@ AnsiGreen   = "\033[38;5;114m"
 
 Understanding subject creation is crucial for contributors. Here's the complete flow:
 
-### Step 1: CLI Parsing
+### Step 1: CLI Parsing with Dynamic Loading
 
 ```bash
 operatree new event --name "Cairo Visit" --date "2026-05-22"
 ```
 
-**In `cmd/new.go`:**
+**In `cmd/new.go` init():**
 
 ```go
-// 1. Cobra parses command structure
-// 2. resolveProjectDir() (PreRun) sets actDir
-// 3. newSubject() is called with args=["event"]
-
-func newSubject(cmd *cobra.Command, args []string) {
-    a := args[0]  // "event" (lowercase)
+func init() {
+    // 1. DYNAMICALLY build valid subjects from SubjectModuleMap
+    validSubjects = []cobra.Completion{}
+    for k := range project.SubjectModuleMap {
+        sn := strings.ToLower(string(k))
+        validSubjects = append(validSubjects, sn)
+    }
     
-    // Map to subject type constant
-    st, ok := argToSubject[a]  // SubjectEvent ("EVENT")
-    if !ok { log.Fatal("unsupported subject type") }
+    // 2. Create command with dynamic ValidArgs
+    newCmd = &cobra.Command{
+        Use:       fmt.Sprintf("new [%s]", strings.Join(validSubjects, " | ")),
+        ValidArgs: validSubjects,  // ["event", "task", "topic", "objective"]
+        Args:      cobra.MatchAll(cobra.OnlyValidArgs, cobra.ExactArgs(1)),
+        Run:       newSubject,
+    }
+    
+    // 3. Add flags and set PreRun hook
+    newCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
+    newCmd.Flags().StringVar(&subjectName, "name", "", "subject name")
+    newCmd.Flags().StringVar(&subjectDate, "date", "", "subject date")
+    newCmd.PreRun = resolveProjectDir
+    rootCmd.AddCommand(newCmd)
+}
+```
+
+**In `cmd/new.go` newSubject():**
+
+```go
+func newSubject(cmd *cobra.Command, args []string) {
+    a := args[0]  // "event" (lowercase CLI input)
+    
+    // Convert to uppercase and create SubjectType constant
+    st := strings.ToUpper(a)  // "EVENT"
     
     // Load project with path hydration
     p, err := project.Load(actDir)
+    if err != nil { log.Fatal(err) }
     
-    // Orchestrate subject creation
-    if err := project.NewSubject(&p, subjectName, subjectDate, st); err != nil {
+    // Pass to business logic
+    if err := project.NewSubject(&p, subjectName, subjectDate, subject.SubjectType(st)); err != nil {
         log.Fatal(err)
     }
 }
@@ -963,9 +1008,10 @@ func NewSubject(p *Project, subjectName, subjectDate string, st subject.SubjectT
         Date: subjectDate,       // "2026-05-22"
     }
     
-    // 2. Get target module (ModuleEvents for SubjectEvent)
-    tmt := SubjectModuleMap[st]
+    // 2. Get target module
+    tmt := SubjectModuleMap[st]  // ModuleEvents
     tm, err := findModule(p.Modules, tmt)
+    if err != nil { return err }
     
     // 3. Call factory - this does all the setup
     s, err := subject.SubjectFactory(is, tm.AbsPath, listOfExistingSubjects)
@@ -975,7 +1021,12 @@ func NewSubject(p *Project, subjectName, subjectDate string, st subject.SubjectT
     if err := s.WriteToDisk(); err != nil { return err }
     
     // 5. Update project and log
-    // ...
+    tm.Subjects = append(tm.Subjects, s)
+    if err := p.WriteMetadata(); err != nil { return err }
+    
+    activitylog.Log(p.ProjectDir(), activitylog.ActionCreate, string(st), s.Name)
+    
+    return nil
 }
 ```
 
@@ -994,7 +1045,7 @@ func SubjectFactory(s Subject, ppth string, pss []Subject) (Subject, error) {
 }
 
 func silent(s Subject, ppth string) (Subject, error) {
-    // 1. Set default subdirectories from configuration
+    // 1. Set default subdirectories from configuration map
     s.SubDirs = SubDirs[s.Type]  // For EVENT: [01_AGENDA, 02_MEDIA, ...]
     s.Files = Files[s.Type]      // For EVENT: [] (no files)
     
@@ -1189,31 +1240,7 @@ var Files SubjectFilesMap = SubjectFilesMap{
 }
 ```
 
-**Step 3: Add to CLI Arguments** (`cmd/root.go`):
-
-```go
-var (
-    SubjectValidArgs []cobra.Completion = []cobra.Completion{
-        "event", "task", "topic", "objective", "meeting",
-    }
-)
-```
-
-**Step 4: Add Argument Mapping** (`cmd/new.go`):
-
-```go
-var (
-    argToSubject map[string]subject.SubjectType = map[string]subject.SubjectType{
-        "event":     subject.SubjectEvent,
-        "task":      subject.SubjectTask,
-        "topic":     subject.SubjectTopic,
-        "objective": subject.SubjectObjective,
-        "meeting":   subject.SubjectMeeting,  // ← Add this
-    }
-)
-```
-
-**Step 5: Add Module Mapping** (`internal/project/types.go`):
+**Step 3: Add Module Mapping** (`internal/project/types.go`):
 
 ```go
 var SubjectModuleMap = map[subject.SubjectType]module.ModuleType{
@@ -1225,11 +1252,9 @@ var SubjectModuleMap = map[subject.SubjectType]module.ModuleType{
 }
 ```
 
-**Step 6: Add to Project Templates** (`internal/template/*.yml`):
+**That's it!** The CLI will automatically recognize the new subject type because `cmd/new.go` dynamically loads from `project.SubjectModuleMap`.
 
-If needed, add the new subject's module to templates.
-
-**Step 7: Optional - Add Interactive Mode** (`internal/subject/interactive.go`):
+**Step 4: Optional - Add Interactive Mode** (`internal/subject/interactive.go`):
 
 If you want interactive prompts for the new type:
 
@@ -1251,7 +1276,7 @@ if st == SubjectMeeting {
 }
 ```
 
-**Step 8: Update Subject Struct** (`internal/subject/types.go`):
+**Step 5: Update Subject Struct** (`internal/subject/types.go`):
 
 If you added type-specific fields in interactive mode, add them to `Subject` struct:
 
@@ -1262,6 +1287,10 @@ type Subject struct {
     Attendees []string `yaml:"attendees,omitempty"`
 }
 ```
+
+**Step 6: Update Project Templates** (if needed):
+
+Add the new subject's module to templates if appropriate.
 
 **Test it:**
 
@@ -1288,7 +1317,7 @@ import (
 
 func init() {
     myCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
-    myCmd.PreRun = resolveProjectDir  // Or resolveBaseDir if not project-specific
+    myCmd.PreRun = resolveProjectDir
     rootCmd.AddCommand(myCmd)
 }
 
@@ -1296,7 +1325,7 @@ var myCmd = &cobra.Command{
     Use:   "mycommand [args]",
     Short: "Short description",
     Long:  "Longer description of what this command does",
-    Args:  cobra.ExactArgs(0),  // or as needed
+    Args:  cobra.ExactArgs(0),
     Run:   runMyCommand,
 }
 
@@ -1507,12 +1536,12 @@ go test -v ./...
 1. Check CLI accepts it: `operatree new --help`
 2. Verify constant in `internal/subject/types.go`
 3. Verify mapping in `internal/project/types.go`
-4. Verify argument mapping in `cmd/new.go`
 
 **Fix:**
 
-- Add subject type definition
-- Add to all required mappings (see Scenario 1 above)
+- Add subject type definition (Step 1 from Scenario 1)
+- Add to SubjectModuleMap (Step 3 from Scenario 1)
+- CLI will automatically pick it up!
 
 ---
 
