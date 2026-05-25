@@ -16,7 +16,7 @@ func init() {
 var syncCmd = &cobra.Command{
 	Use:   "sync",
 	Short: "Syncs project",
-	Long:  "Syncs project subjects with project metadata - use WatchExec to automate sync",
+	Long:  "Syncs project subjects with project metadata",
 	Args:  cobra.NoArgs,
 	Run:   sync,
 }

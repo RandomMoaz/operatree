@@ -69,6 +69,4 @@ type Subject struct {
 	RelatedObjective string   `yaml:"related_objective,omitempty"`
 	RelatedEvents    []string `yaml:"related_events,omitempty"`
 	Outputs          []string `yaml:"outputs,omitempty"`
-
-	// DirName string      `yaml:"dirName"`
 }

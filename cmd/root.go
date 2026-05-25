@@ -13,13 +13,10 @@ const dFlagHelp_project = "project directory (default: default project, '.' for 
 const dFlagHelp_baseDir = "base directory (default: config standardDir, '.' for current dir, or an absolute path)"
 
 var (
-	destDir          string
-	verbose          bool // verbose flag
-	cfg              config.Config
-	SubjectValidArgs []cobra.Completion = []cobra.Completion{"event", "task", "topic", "objective"}
-
-	// The actual dir will be used, all commands should use this variable only
-	actDir string
+	verbose bool          // verbose flag
+	cfg     config.Config // loaded config
+	destDir string        // initial -d value enetered by user
+	actDir  string        // The actual dir will be used, all commands should use this variable only
 )
 
 var rootCmd = &cobra.Command{
