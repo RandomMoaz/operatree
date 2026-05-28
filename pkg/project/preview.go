@@ -3,8 +3,8 @@ package project
 import (
 	"strings"
 
-	"github.com/hanymamdouh82/operatree/internal/subject"
 	"github.com/hanymamdouh82/operatree/internal/ui"
+	"github.com/hanymamdouh82/operatree/pkg/subject"
 )
 
 func label(s string) string {

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hanymamdouh82/operatree/internal/config"
 	"github.com/hanymamdouh82/operatree/internal/runner"
+	"github.com/hanymamdouh82/operatree/pkg/config"
 	"github.com/spf13/cobra"
 )
 

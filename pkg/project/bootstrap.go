@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/hanymamdouh82/operatree/internal/config"
 	"github.com/hanymamdouh82/operatree/internal/filesystem"
 	"github.com/hanymamdouh82/operatree/internal/template"
+	"github.com/hanymamdouh82/operatree/pkg/config"
 )
 
 // Bootstraps a project by creating project struct and call bootstrap modules

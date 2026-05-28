@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/hanymamdouh82/operatree/internal/activitylog"
-	"github.com/hanymamdouh82/operatree/internal/module"
-	"github.com/hanymamdouh82/operatree/internal/subject"
+	"github.com/hanymamdouh82/operatree/pkg/module"
+	"github.com/hanymamdouh82/operatree/pkg/subject"
 )
 
 // NewSubject creates a new subject of the specified type in its corresponding module.

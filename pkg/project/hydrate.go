@@ -3,7 +3,7 @@ package project
 import (
 	"path"
 
-	"github.com/hanymamdouh82/operatree/internal/module"
+	"github.com/hanymamdouh82/operatree/pkg/module"
 )
 
 func hydratePath(projectBaseDir string, p *Project) {

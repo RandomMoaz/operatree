@@ -1,8 +1,8 @@
 package project
 
 import (
-	"github.com/hanymamdouh82/operatree/internal/module"
-	"github.com/hanymamdouh82/operatree/internal/subject"
+	"github.com/hanymamdouh82/operatree/pkg/module"
+	"github.com/hanymamdouh82/operatree/pkg/subject"
 )
 
 const (

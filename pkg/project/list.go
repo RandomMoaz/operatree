@@ -1,6 +1,6 @@
 package project
 
-import "github.com/hanymamdouh82/operatree/internal/subject"
+import "github.com/hanymamdouh82/operatree/pkg/subject"
 
 // Returns subjects by type. It takes care of recursive walk for nested modules
 func ListSubjects(p *Project, st subject.SubjectType) []subject.Subject {

@@ -5,8 +5,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hanymamdouh82/operatree/internal/config"
 	"github.com/hanymamdouh82/operatree/internal/template"
+	"github.com/hanymamdouh82/operatree/pkg/config"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hanymamdouh82/operatree/internal/module"
 	"github.com/hanymamdouh82/operatree/internal/template"
+	"github.com/hanymamdouh82/operatree/pkg/module"
 )
 
 func Factory(tmplt template.OTTemplate, pname string) (Project, error) {

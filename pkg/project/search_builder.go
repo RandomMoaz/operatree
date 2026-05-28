@@ -4,8 +4,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/hanymamdouh82/operatree/internal/module"
-	"github.com/hanymamdouh82/operatree/internal/subject"
+	"github.com/hanymamdouh82/operatree/pkg/module"
+	"github.com/hanymamdouh82/operatree/pkg/subject"
 )
 
 // cache for search DB. It is implemented so in future features if a function requires accessing search db more than

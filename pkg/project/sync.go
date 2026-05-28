@@ -5,8 +5,8 @@ import (
 	"path"
 
 	"github.com/hanymamdouh82/operatree/internal/filesystem"
-	"github.com/hanymamdouh82/operatree/internal/module"
-	"github.com/hanymamdouh82/operatree/internal/subject"
+	"github.com/hanymamdouh82/operatree/pkg/module"
+	"github.com/hanymamdouh82/operatree/pkg/subject"
 	"gopkg.in/yaml.v3"
 )
 
