@@ -3,7 +3,7 @@ package project
 import (
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"slices"
 
 	"github.com/hanymamdouh82/operatree/internal/activitylog"
@@ -25,7 +25,7 @@ func Archive(p *Project, s subject.Subject) error {
 		return err
 	}
 
-	an := path.Join(ma.AbsPath, ARCHIVED_DEST, s.Name)
+	an := filepath.Join(ma.AbsPath, ARCHIVED_DEST, s.Name)
 	if err := filesystem.Archive(s.DirName, an); err != nil {
 		return err
 	}

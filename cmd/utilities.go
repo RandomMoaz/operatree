@@ -3,6 +3,7 @@ package cmd
 import (
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
@@ -26,7 +27,7 @@ func resolveBaseDir(cmd *cobra.Command, args []string) {
 			return
 		}
 
-		actDir = destDir
+		actDir = filepath.Clean(destDir)
 		return
 	}
 
@@ -35,7 +36,7 @@ func resolveBaseDir(cmd *cobra.Command, args []string) {
 		log.Fatal("-d is not provided and standardDir is not set by operatree init")
 	}
 
-	actDir = cfg.StandardDir
+	actDir = filepath.Clean(cfg.StandardDir)
 }
 
 // This is to be used with any command that requires a project.
@@ -58,7 +59,7 @@ func resolveProjectDir(cmd *cobra.Command, args []string) {
 			return
 		}
 
-		actDir = destDir
+		actDir = filepath.Clean(destDir)
 		return
 	}
 
@@ -67,7 +68,7 @@ func resolveProjectDir(cmd *cobra.Command, args []string) {
 	}
 
 	// finally set the variable that all handlers depend on
-	actDir = cfg.Default.AbsPath
+	actDir = filepath.Clean(cfg.Default.AbsPath)
 }
 
 // This is to be used with any command that requires a project.
@@ -90,7 +91,7 @@ func resolveProjectDirSkippingConfig(cmd *cobra.Command, args []string) {
 			return
 		}
 
-		actDir = destDir
+		actDir = filepath.Clean(destDir)
 		return
 	}
 

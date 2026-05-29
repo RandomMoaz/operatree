@@ -2,7 +2,7 @@ package subject
 
 import (
 	"fmt"
-	"path"
+	"path/filepath"
 
 	"github.com/hanymamdouh82/operatree/internal/filesystem"
 	"github.com/hanymamdouh82/operatree/internal/runner"
@@ -22,7 +22,7 @@ func (s *Subject) MkDir() error {
 func (s *Subject) MkSubDirs() error {
 
 	for _, v := range s.SubDirs {
-		sdp := path.Join(s.DirName, v)
+		sdp := filepath.Join(s.DirName, v)
 
 		if err := filesystem.CreateDir(sdp); err != nil {
 			return err
@@ -35,7 +35,7 @@ func (s *Subject) MkSubDirs() error {
 // Creates empty files on disk
 func (s *Subject) WriteFiles() error {
 	for _, f := range s.Files {
-		sdp := path.Join(s.DirName, f)
+		sdp := filepath.Join(s.DirName, f)
 		t := fmt.Sprintf("# %s\n", s.Name)
 		if err := filesystem.TextToMDFile(t, sdp); err != nil {
 			return err
@@ -48,7 +48,7 @@ func (s *Subject) WriteFiles() error {
 // Writes metadata.yml file for the subject at subject dir
 func (s *Subject) WriteMetadata() error {
 
-	fn := path.Join(s.DirName, METADATA_FILE)
+	fn := filepath.Join(s.DirName, METADATA_FILE)
 	if err := filesystem.StructToFile(s, fn); err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (s *Subject) Describe() {
 
 func (s *Subject) EditMetadata() error {
 
-	fn := path.Join(s.DirName, METADATA_FILE)
+	fn := filepath.Join(s.DirName, METADATA_FILE)
 	if err := runner.EditFile(fn); err != nil {
 		return err
 	}

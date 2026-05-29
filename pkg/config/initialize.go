@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/charmbracelet/huh"
 )
@@ -64,7 +65,7 @@ func InitializeConfig() error {
 	editor := os.Getenv("EDITOR")
 
 	cfg := Config{
-		StandardDir: standardDir,
+		StandardDir: filepath.Clean(standardDir),
 		Editor:      editor,
 		FileManager: defaultFileManager,
 		Projects:    existing.Projects, // preserve tracked projects if overwriting
@@ -80,10 +81,13 @@ func InitializeConfig() error {
 		return err
 	}
 
-	path, _ := ConfigPath()
+	// path, _ := ConfigPath()
 	// reuse your existing Describe styling
 	// just a simple confirmation for now
-	println("\nConfig saved to: " + path + "\n")
+	// println("\nConfig saved to: " + path + "\n")
+
+	cfgPath, _ := ConfigPath() // ← rename to avoid shadowing
+	println("\nConfig saved to: " + cfgPath + "\n")
 
 	return nil
 }

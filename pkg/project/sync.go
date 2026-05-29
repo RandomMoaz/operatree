@@ -2,7 +2,7 @@ package project
 
 import (
 	"log"
-	"path"
+	"path/filepath"
 
 	"github.com/hanymamdouh82/operatree/internal/filesystem"
 	"github.com/hanymamdouh82/operatree/pkg/module"
@@ -25,7 +25,7 @@ func Sync(p *Project) error {
 func syncModule(m *module.Module) error {
 	// Sync subjects at this level
 	for j, s := range m.Subjects {
-		b, err := filesystem.ReadFile(path.Join(s.DirName, subject.METADATA_FILE))
+		b, err := filesystem.ReadFile(filepath.Join(s.DirName, subject.METADATA_FILE))
 		if err != nil {
 			// subject file missing or unreadable — skip, don't abort
 			log.Printf("missing yml for subject %s\n", s.DirName)

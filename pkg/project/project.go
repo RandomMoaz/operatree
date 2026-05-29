@@ -2,7 +2,7 @@ package project
 
 import (
 	"fmt"
-	"path"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -50,7 +50,7 @@ func (p *Project) Describe(plain bool) error {
 
 func (p *Project) WriteMetadata() error {
 
-	fn := path.Join(p.ProjectDir(), METADATA_FILE)
+	fn := filepath.Join(p.ProjectDir(), METADATA_FILE)
 	if err := filesystem.StructToFile(p, fn); err != nil {
 		return err
 	}
