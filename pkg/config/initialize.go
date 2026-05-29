@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -63,6 +64,10 @@ func InitializeConfig() error {
 
 	// get default editor
 	editor := os.Getenv("EDITOR")
+
+	if standardDir == "" {
+		return fmt.Errorf("Standard Directory cannot be empty")
+	}
 
 	cfg := Config{
 		StandardDir: filepath.Clean(standardDir),
