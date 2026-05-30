@@ -22,11 +22,6 @@ var metadataCmd = &cobra.Command{
 }
 
 func editMetadata(cmd *cobra.Command, args []string) {
-	p, err := project.Load(actDir)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	var t, term string
 
 	if len(args) == 2 {
@@ -34,22 +29,17 @@ func editMetadata(cmd *cobra.Command, args []string) {
 		term = args[1]
 	} else if len(args) == 1 {
 		term = args[0]
-	} else {
-		t = ""
-		term = ""
 	}
 
-	s, err := project.FindSubjects(&p, t, term)
+	p, err := project.Load(actDir)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// call edit
-	if err := project.EditSubjectMetadata(&p, s); err != nil {
+	if err := project.EditMetadata(&p, t, term); err != nil {
 		log.Fatal(err)
 	}
 
-	// Sync project metadata with subject metadata
 	if err := project.Sync(&p); err != nil {
 		log.Fatal(err)
 	}

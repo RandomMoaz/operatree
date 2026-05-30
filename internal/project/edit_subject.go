@@ -5,10 +5,14 @@ import (
 	"os"
 
 	"github.com/hanymamdouh82/operatree/internal/activitylog"
-	"github.com/hanymamdouh82/operatree/internal/subject"
 )
 
-func EditSubjectMetadata(p *Project, s subject.Subject) error {
+func EditMetadata(p *Project, subjectType, term string) error {
+	s, err := FindSubjects(p, subjectType, term)
+	if err != nil {
+		return err
+	}
+
 	if err := s.EditMetadata(); err != nil {
 		return err
 	}
