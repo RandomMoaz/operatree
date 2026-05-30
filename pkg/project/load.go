@@ -2,7 +2,7 @@ package project
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 )
@@ -11,7 +11,7 @@ import (
 // Path represents project root path
 func Load(pth string) (Project, error) {
 
-	b, err := os.ReadFile(path.Join(pth, METADATA_FILE))
+	b, err := os.ReadFile(filepath.Join(pth, METADATA_FILE))
 	if err != nil {
 		return Project{}, err
 	}

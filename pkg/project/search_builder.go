@@ -4,8 +4,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/hanymamdouh82/operatree/internal/module"
-	"github.com/hanymamdouh82/operatree/internal/subject"
+	"github.com/hanymamdouh82/operatree/pkg/module"
+	"github.com/hanymamdouh82/operatree/pkg/subject"
 )
 
 // cache for search DB. It is implemented so in future features if a function requires accessing search db more than
@@ -42,7 +42,7 @@ func walkModule(m module.Module, path []string) []SearchDB {
 	currentPath = append(currentPath, m.Name)
 
 	for j, s := range m.Subjects {
-		a := slices.Concat(s.Tags, s.Paricipants)
+		a := slices.Concat(s.Tags, s.Participants)
 		a = append(a, s.Name)
 		a = append(a, s.Notes)
 		a = append(a, s.Date)

@@ -5,8 +5,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hanymamdouh82/operatree/internal/project"
 	"github.com/hanymamdouh82/operatree/internal/template"
+	"github.com/hanymamdouh82/operatree/pkg/project"
 	"github.com/spf13/cobra"
 )
 

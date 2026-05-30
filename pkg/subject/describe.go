@@ -120,7 +120,7 @@ func describe(s *Subject) {
 	b.WriteString(row("Location", s.Location))
 	b.WriteString(row("Owner", s.Owner))
 	b.WriteString(renderStatus(s.Status))
-	b.WriteString(rowList("Participants", s.Paricipants))
+	b.WriteString(rowList("Participants", s.Participants))
 	b.WriteString(renderTags(s.Tags))
 
 	// Notes

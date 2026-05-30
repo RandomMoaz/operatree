@@ -5,8 +5,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/hanymamdouh82/operatree/internal/module"
 	"github.com/hanymamdouh82/operatree/internal/template"
+	"github.com/hanymamdouh82/operatree/pkg/module"
 )
 
 func TestFactory(t *testing.T) {

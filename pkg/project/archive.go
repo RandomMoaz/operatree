@@ -3,13 +3,13 @@ package project
 import (
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"slices"
 
 	"github.com/hanymamdouh82/operatree/internal/activitylog"
 	"github.com/hanymamdouh82/operatree/internal/filesystem"
-	"github.com/hanymamdouh82/operatree/internal/module"
-	"github.com/hanymamdouh82/operatree/internal/subject"
+	"github.com/hanymamdouh82/operatree/pkg/module"
+	"github.com/hanymamdouh82/operatree/pkg/subject"
 )
 
 // Archive moves subject from its module to project's 99_ARCHIVE module.
@@ -25,7 +25,7 @@ func Archive(p *Project, s subject.Subject) error {
 		return err
 	}
 
-	an := path.Join(ma.AbsPath, ARCHIVED_DEST, s.Name)
+	an := filepath.Join(ma.AbsPath, ARCHIVED_DEST, s.Name)
 	if err := filesystem.Archive(s.DirName, an); err != nil {
 		return err
 	}
@@ -41,19 +41,17 @@ func Archive(p *Project, s subject.Subject) error {
 		return err
 	}
 
-	if err :=activitylog.Log(
+	if err := activitylog.Log(
 		p.ProjectDir(),
 		activitylog.ActionArchive,
 		string(s.Type),
 		s.Name,
-		
-	); err !=nil{
-		fmt.Fprintf(os.Stderr,"Warning :could not write activity log :%v\n",err)
+	); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning :could not write activity log :%v\n", err)
 	}
 
 	return nil
 }
-
 
 func updateModule(m *module.Module, s subject.Subject) error {
 	sidx := slices.IndexFunc(m.Subjects, func(ms subject.Subject) bool {

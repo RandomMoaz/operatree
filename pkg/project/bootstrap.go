@@ -2,11 +2,11 @@ package project
 
 import (
 	"fmt"
-	"path"
+	"path/filepath"
 
-	"github.com/hanymamdouh82/operatree/internal/config"
 	"github.com/hanymamdouh82/operatree/internal/filesystem"
 	"github.com/hanymamdouh82/operatree/internal/template"
+	"github.com/hanymamdouh82/operatree/pkg/config"
 )
 
 // Bootstraps a project by creating project struct and call bootstrap modules
@@ -44,7 +44,7 @@ func Bootstrap(name string, bpth string, t string) (Project, error) {
 	// path hydration:
 	// Walk project, subjects, modules, nested modules and injects AbsPath, DirName
 	// It is crucial to hydrate at runtime to comply with relative-path requirememnts
-	ppth := path.Join(bpth, name)
+	ppth := filepath.Join(bpth, name)
 	hydratePath(ppth, &np)
 
 	// create project dir

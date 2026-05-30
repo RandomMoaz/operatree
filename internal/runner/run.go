@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/hanymamdouh82/operatree/internal/config"
+	"github.com/hanymamdouh82/operatree/pkg/config"
 )
 
 func EditFile(filePath string) error {

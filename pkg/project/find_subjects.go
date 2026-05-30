@@ -3,7 +3,7 @@ package project
 import (
 	"fmt"
 
-	"github.com/hanymamdouh82/operatree/internal/subject"
+	"github.com/hanymamdouh82/operatree/pkg/subject"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/lithammer/fuzzysearch/fuzzy"
 )

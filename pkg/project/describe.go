@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hanymamdouh82/operatree/internal/module"
 	"github.com/hanymamdouh82/operatree/internal/ui"
+	"github.com/hanymamdouh82/operatree/pkg/module"
 )
 
 func describeProject(p *Project) {

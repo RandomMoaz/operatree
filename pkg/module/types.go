@@ -1,6 +1,6 @@
 package module
 
-import "github.com/hanymamdouh82/operatree/internal/subject"
+import "github.com/hanymamdouh82/operatree/pkg/subject"
 
 type ModuleType string
 

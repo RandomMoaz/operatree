@@ -62,8 +62,8 @@ type Subject struct {
 	Tags    []string    `yaml:"tags"`
 	Notes   string      `yaml:"notes"`
 	// Custom fields based on subject type, you must use `omitempty` to avoid parsing if not used
-	Paricipants      []string `yaml:"paricipants,omitempty"` // omitempty guarantees that field written only for Subject that needs it
-	Location         string   `yaml:"location,omitempty"`    // omitempty guarantees that field written only for Subject that needs it
+	Participants     []string `yaml:"participants,omitempty"` // omitempty guarantees that field written only for Subject that needs it
+	Location         string   `yaml:"location,omitempty"`     // omitempty guarantees that field written only for Subject that needs it
 	Owner            string   `yaml:"owner,omitempty"`
 	Status           string   `yaml:"status,omitempty"`
 	RelatedObjective string   `yaml:"related_objective,omitempty"`

@@ -63,7 +63,7 @@ func interactiveCLI(st SubjectType, s *Subject, ss []Subject) error {
 		}
 
 		s.Location = location
-		s.Paricipants = metadata.ParseParticipants(participants)
+		s.Participants = metadata.ParseParticipants(participants)
 	}
 
 	// Task-specific fields

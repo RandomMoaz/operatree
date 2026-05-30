@@ -1,7 +1,9 @@
 package config
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/charmbracelet/huh"
 )
@@ -16,7 +18,7 @@ func InitializeConfig() error {
 
 	var standardDir string
 	var overwrite bool
-	var defaultFileManager string
+	var defaultFileManager, defaultFileEditor string
 
 	if existing.StandardDir != "" {
 		// Config already exists — ask before overwriting
@@ -47,6 +49,23 @@ func InitializeConfig() error {
 		return err
 	}
 
+	// Editor
+	// get default editor
+	editor := os.Getenv("EDITOR")
+
+	err = huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Default file editor").
+				Description("Default binary name for file editor").
+				Placeholder(editor).
+				Value(&defaultFileEditor),
+		),
+	).Run()
+	if err != nil {
+		return err
+	}
+
 	err = huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
@@ -60,12 +79,13 @@ func InitializeConfig() error {
 		return err
 	}
 
-	// get default editor
-	editor := os.Getenv("EDITOR")
+	if standardDir == "" {
+		return fmt.Errorf("Standard Directory cannot be empty")
+	}
 
 	cfg := Config{
-		StandardDir: standardDir,
-		Editor:      editor,
+		StandardDir: filepath.Clean(standardDir),
+		Editor:      defaultFileEditor,
 		FileManager: defaultFileManager,
 		Projects:    existing.Projects, // preserve tracked projects if overwriting
 		Daemon: Daemon{
@@ -80,10 +100,13 @@ func InitializeConfig() error {
 		return err
 	}
 
-	path, _ := ConfigPath()
+	// path, _ := ConfigPath()
 	// reuse your existing Describe styling
 	// just a simple confirmation for now
-	println("\nConfig saved to: " + path + "\n")
+	// println("\nConfig saved to: " + path + "\n")
+
+	cfgPath, _ := ConfigPath() // ← rename to avoid shadowing
+	println("\nConfig saved to: " + cfgPath + "\n")
 
 	return nil
 }

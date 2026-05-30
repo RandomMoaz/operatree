@@ -105,7 +105,7 @@ func AddProject(name, absPath, template string) error {
 	return Save(cfg)
 }
 
-// Removes project from tracked
+// Removes project from tracked using path
 func RemoveProject(absPath string) error {
 
 	cfg, err := Load()
@@ -120,6 +120,29 @@ func RemoveProject(absPath string) error {
 	// project is not in tracked list
 	if idx == -1 {
 		return fmt.Errorf("current project is not into tracked list")
+	}
+
+	nps := slices.Delete(cfg.Projects, idx, idx+1)
+	cfg.Projects = nps
+
+	return Save(cfg)
+}
+
+// Removed project from tracked projects using project name. It returns error of name is not
+// into tracked projects
+func RemoveProjectByName(name string) error {
+	cfg, err := Load()
+	if err != nil {
+		return err
+	}
+
+	idx := slices.IndexFunc(cfg.Projects, func(p Project) bool {
+		return p.Name == name
+	})
+
+	// project is not in tracked list
+	if idx == -1 {
+		return fmt.Errorf("project is not in tracked list")
 	}
 
 	nps := slices.Delete(cfg.Projects, idx, idx+1)

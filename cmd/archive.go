@@ -3,7 +3,7 @@ package cmd
 import (
 	"log"
 
-	"github.com/hanymamdouh82/operatree/internal/project"
+	"github.com/hanymamdouh82/operatree/pkg/project"
 	"github.com/spf13/cobra"
 )
 

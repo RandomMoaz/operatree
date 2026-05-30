@@ -2,7 +2,7 @@ package subject
 
 import (
 	"fmt"
-	"path"
+	"path/filepath"
 
 	"github.com/hanymamdouh82/operatree/internal/metadata"
 )
@@ -40,7 +40,7 @@ func silent(s Subject, ppth string) (Subject, error) {
 
 	// reset name and path since path depends on name
 	s.Name = nameFactory(s)
-	s.DirName = path.Join(ppth, s.Name)
+	s.DirName = filepath.Join(ppth, s.Name)
 
 	return s, nil
 }
@@ -66,7 +66,7 @@ func interactive(st SubjectType, ppth string, pss []Subject) (Subject, error) {
 
 	// reset name and path since path depends on name
 	s.Name = nameFactory(s)
-	s.DirName = path.Join(ppth, s.Name)
+	s.DirName = filepath.Join(ppth, s.Name)
 
 	return s, nil
 }

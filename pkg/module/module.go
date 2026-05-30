@@ -1,7 +1,7 @@
 package module
 
 import (
-	"path"
+	"path/filepath"
 
 	"github.com/hanymamdouh82/operatree/internal/filesystem"
 )
@@ -20,7 +20,7 @@ func (m *Module) MkDir() error {
 func (m *Module) MkSubDirs() error {
 
 	for _, v := range m.SubDirs {
-		sdp := path.Join(m.AbsPath, v)
+		sdp := filepath.Join(m.AbsPath, v)
 
 		if err := filesystem.CreateDir(sdp); err != nil {
 			return err
