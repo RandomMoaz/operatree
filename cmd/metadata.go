@@ -45,7 +45,7 @@ func editMetadata(cmd *cobra.Command, args []string) {
 	}
 
 	// call edit
-	if err := s.EditMetadata(); err != nil {
+	if err := project.EditSubjectMetadata(&p, s); err != nil {
 		log.Fatal(err)
 	}
 
