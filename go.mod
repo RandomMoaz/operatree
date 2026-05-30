@@ -1,6 +1,6 @@
 module github.com/hanymamdouh82/operatree
 
-go 1.25.0
+go 1.26.3
 
 require (
 	github.com/charmbracelet/glamour v1.0.0
