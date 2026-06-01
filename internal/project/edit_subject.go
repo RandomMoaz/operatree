@@ -26,9 +26,5 @@ func EditMetadata(p *Project, subjectType, term string) error {
 		fmt.Fprintf(os.Stderr, "warning: could not write activity log: %v\n", err)
 	}
 
-	if err := Sync(p); err != nil {
-		return err
-	}
-
 	return nil
 }
