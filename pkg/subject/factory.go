@@ -88,6 +88,9 @@ func nameFactory(s Subject) string {
 	case SubjectTopic:
 		sn := metadata.FormatName(s.Name)
 		return sn
+	case SubjectDataSource:
+		sn := metadata.FormatName(s.Name)
+		return sn
 	default:
 		return s.Name
 	}

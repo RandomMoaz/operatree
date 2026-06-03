@@ -20,8 +20,9 @@ type Project struct {
 
 // SubjectModuleMap maps each subject type to its corresponding storage module
 var SubjectModuleMap = map[subject.SubjectType]module.ModuleType{
-	subject.SubjectEvent:     module.ModuleEvents,
-	subject.SubjectTask:      module.ModuleTasks,
-	subject.SubjectTopic:     module.ModuleTopics,
-	subject.SubjectObjective: module.ModuleObjectives,
+	subject.SubjectEvent:      module.ModuleEvents,
+	subject.SubjectTask:       module.ModuleTasks,
+	subject.SubjectTopic:      module.ModuleTopics,
+	subject.SubjectObjective:  module.ModuleObjectives,
+	subject.SubjectDataSource: module.ModuleDataSources,
 }

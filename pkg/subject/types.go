@@ -11,10 +11,11 @@ const (
 
 // Subjects, each entry defines a new subject
 const (
-	SubjectEvent     SubjectType = "EVENT"
-	SubjectTask      SubjectType = "TASK"
-	SubjectTopic     SubjectType = "TOPIC"
-	SubjectObjective SubjectType = "OBJECTIVE"
+	SubjectEvent      SubjectType = "EVENT"
+	SubjectTask       SubjectType = "TASK"
+	SubjectTopic      SubjectType = "TOPIC"
+	SubjectObjective  SubjectType = "OBJECTIVE"
+	SubjectDataSource SubjectType = "DATASOURCE"
 )
 
 // Default subdirs for subject type. These dirs are created automatically during bootstrapping of a project
@@ -33,6 +34,15 @@ var (
 			"03_REVIEW",
 			"04_FINAL",
 		},
+		SubjectTopic: {
+			"01_DIAGRAMS",
+			"02_ATTACHMENTS",
+		},
+		SubjectObjective: {
+			"01_NOTES",
+			"02_DISCUSSIONS",
+			"03_ATTACHMENTS",
+		},
 	}
 
 	// Those are empty files to be created inside subject dir
@@ -45,6 +55,9 @@ var (
 			"definitions.md",
 			"findings.md",
 			"strategy.md",
+		},
+		SubjectDataSource: {
+			"source.md",
 		},
 	}
 )
@@ -69,4 +82,8 @@ type Subject struct {
 	RelatedObjective string   `yaml:"related_objective,omitempty"`
 	RelatedEvents    []string `yaml:"related_events,omitempty"`
 	Outputs          []string `yaml:"outputs,omitempty"`
+	Source           string   `yaml:"source,omitempty"`          // for DataSource
+	SourceLink       string   `yaml:"sourceLink,omitempty"`      // for DataSource
+	SourceObjective  string   `yaml:"sourceObjective,omitempty"` // for DataSource
+	SourceDataSize   string   `yaml:"sourceDataSize,omitempty"`  // for DataSource
 }

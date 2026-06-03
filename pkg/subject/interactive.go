@@ -107,5 +107,35 @@ func interactiveCLI(st SubjectType, s *Subject, ss []Subject) error {
 		s.RelatedEvents = append(s.RelatedEvents, relatedEvent)
 	}
 
+	// Data-Source-specific fields
+	if st == SubjectDataSource {
+		var source, sourceLink, sourceObjective, sourceDataSize string
+
+		err := huh.NewForm(
+			huh.NewGroup(
+				huh.NewInput().
+					Title("Source").
+					Value(&source),
+				huh.NewInput().
+					Title("Link").
+					Value(&sourceLink),
+				huh.NewInput().
+					Title("Objective").
+					Value(&sourceObjective),
+				huh.NewInput().
+					Title("Data Size").
+					Value(&sourceDataSize),
+			),
+		).Run()
+		if err != nil {
+			return err
+		}
+
+		s.Source = source
+		s.SourceLink = sourceLink
+		s.SourceObjective = sourceObjective
+		s.SourceDataSize = sourceDataSize
+	}
+
 	return nil
 }
