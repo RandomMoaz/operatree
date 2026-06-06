@@ -10,6 +10,7 @@ import (
 func interactiveCLI(st SubjectType, s *Subject, ss []Subject) error {
 
 	var name, date, tags, notes string
+	date = time.Now().Format("2006-01-02")
 
 	// Standard fields — all types
 	err := huh.NewForm(

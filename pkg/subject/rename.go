@@ -19,7 +19,7 @@ func renameSubject(s *Subject, nn string) error {
 
 	// interactive cli
 	if nn == "" {
-		inn, err := interactiveRename()
+		inn, err := interactiveRename(s.Name)
 		if err != nil {
 			return err
 		}
@@ -57,8 +57,8 @@ func renameSubject(s *Subject, nn string) error {
 	return nil
 }
 
-func interactiveRename() (string, error) {
-	var nn string
+func interactiveRename(oldName string) (string, error) {
+	var nn string = oldName
 
 	// Standard fields — all types
 	err := huh.NewForm(
