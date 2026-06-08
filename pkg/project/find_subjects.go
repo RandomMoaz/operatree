@@ -14,6 +14,7 @@ var (
 		string(subject.SubjectTask),
 		string(subject.SubjectTopic),
 		string(subject.SubjectObjective),
+		string(subject.SubjectDataSource),
 	}
 )
 
@@ -78,4 +79,59 @@ func FindSubjects(p *Project, st string, term string) (subject.Subject, error) {
 	}
 
 	return db[idx].Subject, nil
+}
+
+// find subject(s) inside project tree using any string. Find uses metadata only not actual
+// file contents or actual dir structure
+func FindSubjectsSilent(p *Project, st string, term string) ([]subject.Subject, error) {
+
+	types := fuzzy.FindFold(st, subjectTypes)
+
+	var t subject.SubjectType
+	if len(types) != 0 {
+		if len(types) != len(subjectTypes) {
+			t = subject.SubjectType(types[0])
+		} else {
+			t = ""
+		}
+	}
+
+	db := BuildSearchDB(p)
+	normalizedDB := make([]string, len(db))
+	for i, v := range db {
+		normalizedDB[i] = v.SearchStr
+	}
+
+	if len(db) == 0 {
+		return nil, fmt.Errorf("project doesn't contain any subjects yet")
+	}
+
+	// Optionally filter by type
+	if t != "" {
+		filtered := db[:0]
+		for _, entry := range db {
+			if entry.Subject.Type == t {
+				filtered = append(filtered, entry)
+			}
+		}
+		db = filtered
+	}
+
+	// the real search using FindFold
+
+	r := fuzzy.FindFold(term, normalizedDB)
+
+	// converting returned string results to subjects by exact matching with original db slice
+	// for exact matches, returns subject
+	results := make([]subject.Subject, 0)
+
+	for _, v := range r {
+		for j, dbv := range db {
+			if dbv.SearchStr == v {
+				results = append(results, db[j].Subject)
+			}
+		}
+	}
+
+	return results, nil
 }

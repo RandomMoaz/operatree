@@ -1,14 +1,24 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/hanymamdouh82/operatree/pkg/project"
+	"github.com/hanymamdouh82/operatree/pkg/subject"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
+
+var cliTerm, cliType string
+var isPlain bool
 
 func init() {
 	findCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
+	findCmd.Flags().StringVarP(&cliTerm, "term", "t", "", "term")
+	findCmd.Flags().StringVarP(&cliType, "type", "s", "", "subject type")
+	findCmd.Flags().BoolVarP(&isPlain, "plain", "p", false, "show plain result")
+
 	findCmd.PreRun = resolveProjectDir
 	rootCmd.AddCommand(findCmd)
 }
@@ -41,24 +51,60 @@ func find(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	var t, term string
+	// non-interactive prompt
+	if cliTerm != "" {
+		fmt.Printf("Find type: %s\n", cliType)
+		fmt.Printf("Find term: %s\n", cliTerm)
+		ss, err := project.FindSubjectsSilent(&p, cliType, cliTerm)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	if len(args) == 2 {
-		t = args[0]
-		term = args[1]
-	} else if len(args) == 1 {
-		term = args[0]
+		for _, s := range ss {
+			if err := showResult(s, isPlain); err != nil {
+				log.Fatal(err)
+			}
+		}
+
 	} else {
-		t = ""
-		term = ""
-	}
+		// interactive prompt
+		var t, term string
 
-	s, err := project.FindSubjects(&p, t, term)
-	if err != nil {
-		log.Fatal(err)
-	}
+		if len(args) == 2 {
+			t = args[0]
+			term = args[1]
+		} else if len(args) == 1 {
+			term = args[0]
+		} else {
+			t = ""
+			term = ""
+		}
 
-	if s.Type != "" {
+		s, err := project.FindSubjects(&p, t, term)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if s.Type != "" {
+			if err := showResult(s, isPlain); err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+}
+
+func showResult(s subject.Subject, isPlain bool) error {
+
+	if !isPlain {
 		s.Describe()
+		return nil
 	}
+
+	b, err := yaml.Marshal(s)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%s\n", b)
+	return nil
 }
