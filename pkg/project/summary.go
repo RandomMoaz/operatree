@@ -11,10 +11,11 @@ import (
 )
 
 type subjectStats struct {
-	total      int
-	byType     map[subject.SubjectType]int
-	byStatus   map[string]int
-	recentDate string // latest date found across all subjects
+	total         int
+	byType        map[subject.SubjectType]int
+	byStatus      map[string]int
+	recentDate    string // latest date found across all subjects
+	recentSubject string // latest subject by latest date found across all subjects
 }
 
 func (p *Project) Summary() {
@@ -41,6 +42,7 @@ func collectStats(p *Project) subjectStats {
 		// track most recent date
 		if s.Date > stats.recentDate {
 			stats.recentDate = s.Date
+			stats.recentSubject = s.Name
 		}
 	}
 
@@ -59,6 +61,7 @@ func printSummary(p *Project, stats subjectStats) {
 	b.WriteString(label("Total Subjects") + "  " + ui.AnsiYellow + fmt.Sprintf("%d", stats.total) + ui.AnsiReset + "\n")
 	if stats.recentDate != "" {
 		b.WriteString(label("Latest Activity") + "  " + value(stats.recentDate) + "\n")
+		b.WriteString(label("Latest Subject") + "  " + value(stats.recentSubject) + "\n")
 	}
 
 	// By type
