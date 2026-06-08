@@ -28,18 +28,30 @@ var findCmd = &cobra.Command{
 	Short: "Find a subject",
 	Long: `Fuzzy-find subjects across all metadata fields — name, tags, participants, notes, date, and location.
 
-Optionally narrow the search by providing a subject type, a search term, or both
-before launching the interactive finder. The finder includes a live preview panel
-for the selected subject.
+Use positional arguments for interactive mode, or --term and --type flags for
+non-interactive scripting. The --plain flag outputs raw YAML in both modes.
 
-Flags:
-  -d, --dest   Project directory to operate on
-
-Examples:
-  operatree find                        # browse all subjects interactively
+Interactive mode — launches the finder with a live preview panel:
+  operatree find                        # browse all subjects
   operatree find event                  # filter to events, then pick one
   operatree find event cairo            # filter to events matching "cairo"
-  operatree find cairo                  # search "cairo" across all subject types`,
+
+Non-interactive mode — returns a list of matching subjects directly:
+  operatree find --term cairo           # search all subject types for "cairo"
+  operatree find --term cairo --type event   # search events only
+
+Flags:
+  -t, --term    Search term for non-interactive mode
+  -s, --type    Subject type filter for non-interactive mode
+  -p, --plain   Output results as raw YAML instead of formatted view
+  -d, --dest    Project directory to operate on
+
+Examples:
+  operatree find
+  operatree find event cairo
+  operatree find --term cairo --plain
+  operatree find --term report --type task --plain | grep owner
+  operatree find --term cairo -d /path/to/project`,
 	Args: cobra.MatchAll(cobra.MaximumNArgs(2)),
 	Run:  find,
 }
@@ -53,8 +65,6 @@ func find(cmd *cobra.Command, args []string) {
 
 	// non-interactive prompt
 	if cliTerm != "" {
-		fmt.Printf("Find type: %s\n", cliType)
-		fmt.Printf("Find term: %s\n", cliTerm)
 		ss, err := project.FindSubjectsSilent(&p, cliType, cliTerm)
 		if err != nil {
 			log.Fatal(err)
