@@ -17,7 +17,7 @@ func ShowDefulatProject() {
 	}
 
 	if cfg.Default.AbsPath == "" {
-		fmt.Println("No default project set. Run 'operatree default' to set one.")
+		fmt.Println("No default project set. Run 'operatree use' to set one.")
 		return
 	}
 	fmt.Printf("Default project: %s (%s)\n", cfg.Default.Name, cfg.Default.AbsPath)
