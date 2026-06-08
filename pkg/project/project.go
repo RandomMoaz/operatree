@@ -96,7 +96,7 @@ func (p *Project) RenameSubject(st, term, newName string, uuid string) error {
 			return err
 		}
 	} else {
-		sp, err := findSubjectByID(p, uuid)
+		sp, err := FindSubjectByID(p, uuid)
 		if err != nil {
 			return err
 		}
@@ -114,7 +114,7 @@ func (p *Project) RenameSubject(st, term, newName string, uuid string) error {
 	}
 
 	// find subject within the project to update the project metadata
-	ps, err := findSubjectByID(p, s.UUID)
+	ps, err := FindSubjectByID(p, s.UUID)
 	if err != nil {
 		return err
 	}

@@ -8,8 +8,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var newName, uuid string
-
 func init() {
 	renameSubjectCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
 	renameSubjectCmd.Flags().StringVarP(&newName, "new-name", "n", "", "subject new name")

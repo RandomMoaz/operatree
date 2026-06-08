@@ -7,7 +7,7 @@ import (
 	"github.com/hanymamdouh82/operatree/pkg/subject"
 )
 
-func findSubjectByID(p *Project, id string) (*subject.Subject, error) {
+func FindSubjectByID(p *Project, id string) (*subject.Subject, error) {
 	result := findSubjectByIDInModules(p.Modules, id)
 	if result == nil {
 		return nil, fmt.Errorf("subject with ID %s not found", id)

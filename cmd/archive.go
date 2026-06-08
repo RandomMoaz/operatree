@@ -4,11 +4,14 @@ import (
 	"log"
 
 	"github.com/hanymamdouh82/operatree/pkg/project"
+	"github.com/hanymamdouh82/operatree/pkg/subject"
 	"github.com/spf13/cobra"
 )
 
 func init() {
 	archiveCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
+	archiveCmd.Flags().StringVarP(&uuid, "uuid", "u", "", "subject UUID")
+
 	archiveCmd.PreRun = resolveProjectDir
 	rootCmd.AddCommand(archiveCmd)
 }
@@ -35,21 +38,33 @@ func archiveSubject(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	var t, term string
+	var s subject.Subject
 
-	if len(args) == 2 {
-		t = args[0]
-		term = args[1]
-	} else if len(args) == 1 {
-		term = args[0]
+	// if uuid is provided, skip interactive
+	if uuid != "" {
+		sp, err := project.FindSubjectByID(&p, uuid)
+		if err != nil {
+			log.Fatal(err)
+		}
+		s = *sp
+
 	} else {
-		t = ""
-		term = ""
-	}
+		var t, term string
 
-	s, err := project.FindSubject(&p, t, term)
-	if err != nil {
-		log.Fatal(err)
+		if len(args) == 2 {
+			t = args[0]
+			term = args[1]
+		} else if len(args) == 1 {
+			term = args[0]
+		} else {
+			t = ""
+			term = ""
+		}
+
+		s, err = project.FindSubject(&p, t, term)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	if err := p.Archive(s); err != nil {

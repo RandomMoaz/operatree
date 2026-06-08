@@ -13,10 +13,11 @@ const dFlagHelp_project = "project directory — uses default project if unset, 
 const dFlagHelp_baseDir = "base directory — uses standardDir from config if unset, or provide '.' for current dir, a relative or absolute path"
 
 var (
-	verbose bool          // verbose flag
-	cfg     config.Config // loaded config
-	destDir string        // initial -d value enetered by user
-	actDir  string        // The actual dir will be used, all commands should use this variable only
+	verbose       bool          // verbose flag
+	cfg           config.Config // loaded config
+	destDir       string        // initial -d value enetered by user
+	actDir        string        // The actual dir will be used, all commands should use this variable only
+	newName, uuid string
 )
 
 var rootCmd = &cobra.Command{
