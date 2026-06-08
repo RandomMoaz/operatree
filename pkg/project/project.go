@@ -84,12 +84,24 @@ func (p *Project) Archive(s subject.Subject) error {
 }
 
 // finds subject within a project and renames it, and updates project METADATA.yml
-func (p *Project) RenameSubject(st, term, newName string) error {
+func (p *Project) RenameSubject(st, term, newName string, uuid string) error {
+
+	var s subject.Subject
+	var err error
 
 	// find the required subject using interactive CLI for user to select the required one
-	s, err := FindSubjects(p, st, term)
-	if err != nil {
-		return err
+	if uuid == "" {
+		s, err = FindSubject(p, st, term)
+		if err != nil {
+			return err
+		}
+	} else {
+		sp, err := findSubjectByID(p, uuid)
+		if err != nil {
+			return err
+		}
+
+		s = *sp
 	}
 
 	if s.Type == "" {

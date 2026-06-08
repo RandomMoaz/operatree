@@ -20,7 +20,7 @@ var (
 
 // find subject(s) inside project tree using any string. Find uses metadata only not actual
 // file contents or actual dir structure
-func FindSubjects(p *Project, st string, term string) (subject.Subject, error) {
+func FindSubject(p *Project, st string, term string) (subject.Subject, error) {
 
 	types := fuzzy.FindFold(st, subjectTypes)
 

@@ -51,7 +51,7 @@ func openSubject(cmd *cobra.Command, args []string) {
 		term = ""
 	}
 
-	s, err := project.FindSubjects(&p, t, term)
+	s, err := project.FindSubject(&p, t, term)
 	if err != nil {
 		log.Fatal(err)
 	}

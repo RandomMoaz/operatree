@@ -1,14 +1,19 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/hanymamdouh82/operatree/pkg/project"
 	"github.com/spf13/cobra"
 )
 
+var newName, uuid string
+
 func init() {
 	renameSubjectCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
+	renameSubjectCmd.Flags().StringVarP(&newName, "new-name", "n", "", "subject new name")
+	renameSubjectCmd.Flags().StringVarP(&uuid, "uuid", "u", "", "subject UUID")
 	renameSubjectCmd.PreRun = resolveProjectDir
 	rootCmd.AddCommand(renameSubjectCmd)
 }
@@ -41,6 +46,11 @@ func renameSubject(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
+	// uuid cannot work alone, new name must be provided
+	if uuid != "" && newName == "" {
+		log.Fatal(fmt.Errorf("cannot rename without new-name flag"))
+	}
+
 	var t, term string
 
 	if len(args) == 2 {
@@ -53,7 +63,7 @@ func renameSubject(cmd *cobra.Command, args []string) {
 		term = ""
 	}
 
-	if err := p.RenameSubject(t, term, ""); err != nil {
+	if err := p.RenameSubject(t, term, newName, uuid); err != nil {
 		log.Fatal(err)
 	}
 }
