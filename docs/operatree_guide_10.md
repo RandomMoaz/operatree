@@ -202,10 +202,10 @@ operatree untrack -d .
 
 ### `add`
 
-Launch an interactive form to add a new subject to the project. The
-subject type is required. Use `--name` and `--date` to skip their
-interactive prompts — providing `--name` skips the full interactive
-form and creates the subject immediately.
+Launch an interactive form to add a new subject to the project, or create
+one directly using flags for scripting. The subject type is required.
+Providing `--name` skips the interactive form entirely and creates the
+subject immediately with the supplied flag values.
 
 ```bash
 operatree add [type]
@@ -213,33 +213,51 @@ operatree add [type]
 
 **Valid types:** `event`, `task`, `topic`, `objective`, `datasource`
 
-**Flags:**
+**Common flags (all subject types):**
 
-| Flag            | Required | Default         | Description                                         |
-| --------------- | -------- | --------------- | --------------------------------------------------- |
-| `--name`        | No       | —               | Subject name — skips interactive form when provided |
-| `--date`        | No       | —               | Subject date — skips date prompt                    |
-| `--dest` / `-d` | No       | default project | Project directory to operate on                     |
+| Flag      | Short | Required | Default         | Description                                         |
+| --------- | ----- | -------- | --------------- | --------------------------------------------------- |
+| `--name`  | —     | No       | —               | Subject name — triggers non-interactive mode        |
+| `--date`  | —     | No       | —               | Subject date                                        |
+| `--notes` | —     | No       | —               | Subject notes                                       |
+| `--tags`  | —     | No       | —               | Comma-delimited tags (e.g. `"cairo,inspection,q2"`) |
+| `--dest`  | `-d`  | No       | default project | Project directory to operate on                     |
+
+**Type-specific flags:**
+
+| Flag                  | Type            | Description                                        |
+| --------------------- | --------------- | -------------------------------------------------- |
+| `--location`          | event           | Location where the event took place                |
+| `--participants`      | event           | Comma-delimited participant names                  |
+| `--owner`             | task            | Person responsible for the task                    |
+| `--status`            | task, objective | Current status (e.g. `active`, `done`, `deferred`) |
+| `--related-events`    | task            | Comma-delimited related event names                |
+| `--outputs`           | task, objective | Comma-delimited expected or produced outputs       |
+| `--related-objective` | topic           | Name of the objective this topic supports          |
+| `--source`            | datasource      | Data origin (e.g. Kaggle, internal team, API)      |
+| `--source-link`       | datasource      | URL or path to the source data                     |
+| `--source-objective`  | datasource      | Objective this data source supports                |
+| `--source-datasize`   | datasource      | Size or volume of the dataset                      |
 
 **Subject fields by type:**
 
-| Field               | event | task | topic | objective | datasource |
-| ------------------- | ----- | ---- | ----- | --------- | ---------- |
-| `name`              | ✓     | ✓    | ✓     | ✓         | ✓          |
-| `date`              | ✓     | ✓    | ✓     | ✓         | ✓          |
-| `tags`              | ✓     | ✓    | ✓     | ✓         | ✓          |
-| `notes`             | ✓     | ✓    | ✓     | ✓         | ✓          |
-| `location`          | ✓     |      |       |           |            |
-| `participants`      | ✓     |      |       |           |            |
-| `owner`             |       | ✓    |       |           |            |
-| `status`            |       | ✓    |       | ✓         |            |
-| `related_events`    |       | ✓    |       |           |            |
-| `related_objective` |       |      | ✓     |           |            |
-| `outputs`           |       | ✓    |       | ✓         |            |
-| `source`            |       |      |       |           | ✓          |
-| `sourceLink`        |       |      |       |           | ✓          |
-| `sourceObjective`   |       |      |       |           | ✓          |
-| `sourceDataSize`    |       |      |       |           | ✓          |
+| Field                 | event | task | topic | objective | datasource |
+| --------------------- | ----- | ---- | ----- | --------- | ---------- |
+| `--name`              | ✓     | ✓    | ✓     | ✓         | ✓          |
+| `--date`              | ✓     | ✓    | ✓     | ✓         | ✓          |
+| `--tags`              | ✓     | ✓    | ✓     | ✓         | ✓          |
+| `--notes`             | ✓     | ✓    | ✓     | ✓         | ✓          |
+| `--location`          | ✓     |      |       |           |            |
+| `--participants`      | ✓     |      |       |           |            |
+| `--owner`             |       | ✓    |       |           |            |
+| `--status`            |       | ✓    |       | ✓         |            |
+| `--related-events`    |       | ✓    |       |           |            |
+| `--related-objective` |       |      | ✓     |           |            |
+| `--outputs`           |       | ✓    |       | ✓         |            |
+| `--source`            |       |      |       |           | ✓          |
+| `--source-link`       |       |      |       |           | ✓          |
+| `--source-objective`  |       |      |       |           | ✓          |
+| `--source-datasize`   |       |      |       |           | ✓          |
 
 **Subject module locations:**
 
@@ -255,9 +273,12 @@ operatree add [type]
 
 ```bash
 operatree add event
-operatree add task --name "Prepare Report"
-operatree add event --name "Client Workshop" --date 2026-06-15
-operatree add datasource -d /home/alex/projects/anchor
+operatree add event --name "Cairo Site Visit" --date 2026-06-01 --location Cairo --participants "Alex,Sara" --tags "site,inspection"
+operatree add task --name "Prepare Report" --owner Alex --status active --related-events "Cairo Site Visit"
+operatree add topic --name "Predictive Maintenance" --related-objective "Reduce Downtime" --tags "ml,iot"
+operatree add objective --name "Reduce Downtime" --status active --tags "maintenance,kpi"
+operatree add datasource --name "Sensor Readings 2025" --source "IoT Team" --source-link "/06_DATA/01_RAW/sensors.csv" --source-datasize "2.4GB"
+operatree add task --name "Deploy" --date 2026-06-15 -d /path/to/project
 ```
 
 ---
@@ -265,15 +286,24 @@ operatree add datasource -d /home/alex/projects/anchor
 ### `find`
 
 Fuzzy-find subjects across all metadata fields — name, tags, participants,
-notes, date, and location. Opens an interactive finder with a live preview
-panel. Selecting a subject displays its full formatted metadata. Read-only
-— never modifies anything.
+notes, date, and location. Supports interactive and non-interactive modes.
+Read-only — never modifies anything.
+
+**Interactive mode** — opens the finder with a live preview panel.
+Selecting a subject displays its full formatted metadata:
 
 ```bash
 operatree find [type] [term]
 ```
 
-**Arguments:**
+**Non-interactive mode** — returns results directly without launching the
+finder. Use `--term` and `--type` flags:
+
+```bash
+operatree find --term [term] --type [type]
+```
+
+**Arguments (interactive mode):**
 
 | Argument | Required | Description                                    |
 | -------- | -------- | ---------------------------------------------- |
@@ -282,9 +312,12 @@ operatree find [type] [term]
 
 **Flags:**
 
-| Flag     | Short | Required | Default         | Description                     |
-| -------- | ----- | -------- | --------------- | ------------------------------- |
-| `--dest` | `-d`  | No       | default project | Project directory to operate on |
+| Flag      | Short | Required | Default         | Description                                          |
+| --------- | ----- | -------- | --------------- | ---------------------------------------------------- |
+| `--term`  | `-t`  | No       | —               | Search term for non-interactive mode                 |
+| `--type`  | `-s`  | No       | —               | Subject type filter for non-interactive mode         |
+| `--plain` | `-p`  | No       | false           | Output results as raw YAML instead of formatted view |
+| `--dest`  | `-d`  | No       | default project | Project directory to operate on                      |
 
 **Examples:**
 
@@ -293,7 +326,11 @@ operatree find
 operatree find event
 operatree find event cairo
 operatree find cairo
-operatree find task report -d /home/alex/projects/anchor
+operatree find --term cairo
+operatree find --term report --type task
+operatree find --term report --type task --plain
+operatree find --term report --type task --plain | grep owner
+operatree find --term done --type task --plain | grep uuid | awk '{print $2}' | xargs -I{} operatree archive --uuid {}
 ```
 
 ---
@@ -367,15 +404,23 @@ operatree open event kickoff -d /home/alex/projects/fleetfix
 
 ### `rename`
 
-Fuzzy-find a subject and rename it interactively. Updates the subject
-directory name, `META.yaml`, and all cross-references in the project
-metadata index.
+Fuzzy-find a subject and rename it interactively, or target one directly
+by UUID for scripting. Updates the subject directory name, `META.yaml`,
+and all cross-references in the project metadata index in one operation.
+
+**Interactive mode:**
 
 ```bash
 operatree rename [type] [term]
 ```
 
-**Arguments:**
+**Non-interactive mode:**
+
+```bash
+operatree rename --uuid [uuid] --new-name [name]
+```
+
+**Arguments (interactive mode):**
 
 | Argument | Required | Description                                    |
 | -------- | -------- | ---------------------------------------------- |
@@ -384,9 +429,13 @@ operatree rename [type] [term]
 
 **Flags:**
 
-| Flag     | Short | Required | Default         | Description                     |
-| -------- | ----- | -------- | --------------- | ------------------------------- |
-| `--dest` | `-d`  | No       | default project | Project directory to operate on |
+| Flag         | Short | Required | Default         | Description                                             |
+| ------------ | ----- | -------- | --------------- | ------------------------------------------------------- |
+| `--uuid`     | `-u`  | No       | —               | Subject UUID for non-interactive mode                   |
+| `--new-name` | `-n`  | No       | —               | New name to assign — required when `--uuid` is provided |
+| `--dest`     | `-d`  | No       | default project | Project directory to operate on                         |
+
+**Note:** `--uuid` requires `--new-name`. Providing `--uuid` without `--new-name` is an error.
 
 **Examples:**
 
@@ -394,21 +443,32 @@ operatree rename [type] [term]
 operatree rename
 operatree rename event
 operatree rename event kickoff
+operatree rename --uuid a1b2c3d4 --new-name "Cairo Factory Review"
+operatree rename --uuid a1b2c3d4 --new-name "Cairo Factory Review" -d /path/to/project
 ```
 
 ---
 
 ### `archive`
 
-Fuzzy-find a subject and move it to `99_ARCHIVE/` at the project root.
-The subject directory and `META.yaml` are preserved exactly as-is.
-The action is recorded in `activity.log`.
+Fuzzy-find a subject and move it to `99_ARCHIVE/` at the project root,
+or target one directly by UUID for scripting. The subject directory and
+`META.yaml` are preserved exactly as-is. The action is recorded in
+`activity.log`.
+
+**Interactive mode:**
 
 ```bash
 operatree archive [type] [term]
 ```
 
-**Arguments:**
+**Non-interactive mode:**
+
+```bash
+operatree archive --uuid [uuid]
+```
+
+**Arguments (interactive mode):**
 
 | Argument | Required | Description                                    |
 | -------- | -------- | ---------------------------------------------- |
@@ -417,9 +477,10 @@ operatree archive [type] [term]
 
 **Flags:**
 
-| Flag     | Short | Required | Default         | Description                     |
-| -------- | ----- | -------- | --------------- | ------------------------------- |
-| `--dest` | `-d`  | No       | default project | Project directory to operate on |
+| Flag     | Short | Required | Default         | Description                                                          |
+| -------- | ----- | -------- | --------------- | -------------------------------------------------------------------- |
+| `--uuid` | `-u`  | No       | —               | Subject UUID for non-interactive mode — bypasses the finder entirely |
+| `--dest` | `-d`  | No       | default project | Project directory to operate on                                      |
 
 **Examples:**
 
@@ -427,6 +488,14 @@ operatree archive [type] [term]
 operatree archive
 operatree archive task
 operatree archive task report
+operatree archive --uuid a1b2c3d4
+operatree archive --uuid a1b2c3d4 -d /path/to/project
+
+# Bulk archive all done tasks via pipeline
+operatree find --term done --type task --plain \
+  | grep uuid \
+  | awk '{print $2}' \
+  | xargs -I{} operatree archive --uuid {}
 ```
 
 ---

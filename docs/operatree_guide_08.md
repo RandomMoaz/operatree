@@ -12,20 +12,55 @@ ecosystem of tools being built around it.
 
 ## 8.1 Non-Interactive Subject Creation
 
-By default, `operatree add` launches an interactive form. For scripting and
-automation, the `--name` and `--date` flags bypass the interactive prompts
-entirely:
+By default, `operatree add` launches an interactive form. Providing `--name`
+bypasses the interactive form entirely and creates the subject immediately.
+All subject fields are available as flags, enabling fully scripted subject
+creation without any user interaction.
+
+Common fields available for all subject types:
 
 ```bash
-operatree add event --name "Weekly Sync" --date 2026-06-15
-operatree add task --name "Prepare Q3 Report" --date 2026-06-15
-operatree add topic --name "Decarbonization Frameworks" --date 2026-06-15
+operatree add event \
+  --name "Weekly Sync" \
+  --date 2026-06-15 \
+  --location "Cairo HQ" \
+  --participants "Alex,Sara" \
+  --tags "sync,weekly" \
+  --notes "Weekly team sync."
+
+operatree add task \
+  --name "Prepare Q3 Report" \
+  --date 2026-06-15 \
+  --owner Alex \
+  --status active \
+  --related-events "Weekly Sync" \
+  --outputs "Q3 Report v1.0" \
+  --tags "report,q3"
+
+operatree add topic \
+  --name "Decarbonization Frameworks" \
+  --date 2026-06-15 \
+  --related-objective "Reduce Carbon Footprint" \
+  --tags "sustainability,frameworks"
+
+operatree add objective \
+  --name "Reduce Carbon Footprint" \
+  --date 2026-06-15 \
+  --status active \
+  --tags "sustainability,kpi"
+
+operatree add datasource \
+  --name "Emissions Dataset 2025" \
+  --date 2026-06-15 \
+  --source "Environmental Team" \
+  --source-link "/06_DATA/01_RAW/emissions_2025.csv" \
+  --source-objective "Reduce Carbon Footprint" \
+  --source-datasize "450MB" \
+  --tags "emissions,raw"
 ```
 
-When `--name` is provided, OperaTree skips the interactive form and creates the
-subject immediately with the provided values. Fields not supplied by flags are
-left at their zero values in `META.yaml` and can be filled in later with
-`operatree edit`.
+When `--name` is provided, fields not supplied by flags are left at their zero
+values in `META.yaml` and can be filled in later with `operatree edit`.
 
 This makes it straightforward to create subjects from scripts, cron jobs, or
 other automated pipelines:
@@ -35,13 +70,10 @@ other automated pipelines:
 0 9 * * 1-5 operatree add event \
   --name "Daily Standup $(date +%Y-%m-%d)" \
   --date "$(date +%Y-%m-%d)" \
+  --participants "Alex,Sara,Omar" \
+  --tags "standup,daily" \
   -d /home/alex/projects/fleetfix
 ```
-
-Full scripting support — including flags for all subject fields such as `--owner`,
-`--status`, and `--tags` — is planned for a future release. The current `--name`
-and `--date` flags cover the most common automation need: creating subjects
-programmatically without interaction.
 
 ---
 
@@ -82,18 +114,38 @@ grep CREATE activity.log | grep task | grep "^2026-06"
 grep CREATE activity.log | awk -F'\t' '{print $3, $4}' > creation-report.txt
 ```
 
-### Non-interactive find (upcoming)
+### Non-interactive find
 
-The current `operatree find` command depends on the interactive fuzzy finder.
-A future release will add full CLI flag support for non-interactive querying:
+`operatree find` supports non-interactive mode via `--term` and `--type` flags,
+returning results directly without launching the finder:
 
 ```bash
-# Planned — not yet available
-operatree find task --term "documentation"   # list tasks matching "documentation"
+operatree find --term cairo                        # search all types for "cairo"
+operatree find --term report --type task           # search tasks for "report"
+operatree find --term active --type task --plain   # output as raw YAML
 ```
 
-This will make `find` fully scriptable and enable OperaTree to be used as a
-query engine in automated pipelines.
+The `--plain` flag outputs results as raw YAML, making `find` a query engine
+for scripting pipelines. A powerful pattern combining `find`, `grep`, and
+`archive` to bulk-archive completed tasks:
+
+```bash
+# Find all done tasks and archive them by UUID
+operatree find --term done --type task --plain \
+  | grep uuid \
+  | awk '{print $2}' \
+  | xargs -I{} operatree archive --uuid {}
+```
+
+Similarly, rename a subject by UUID without interactive selection:
+
+```bash
+# Get the UUID of a subject
+operatree find --term "kickoff" --type event --plain | grep uuid
+
+# Rename it directly
+operatree rename --uuid a1b2c3d4 --new-name "FleetFix Kickoff Meeting"
+```
 
 ---
 
