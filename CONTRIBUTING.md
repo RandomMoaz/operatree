@@ -102,16 +102,17 @@ operatree/
 │   └── version.go          # operatree version
 ├── internal/
 │   ├── activitylog/        # append-only activity log
-│   ├── config/             # config file management
 │   ├── filesystem/         # filesystem helpers
 │   ├── help/               # embedded documentation
 │   ├── metadata/           # tag and participant parsing utilities
-│   ├── module/             # module struct and factories
-│   ├── project/            # project struct, bootstrap, search, describe, sync
 │   ├── runner/             # external binaries runner
-│   ├── subject/            # subject struct, factory, interactive CLI
 │   ├── templates/          # templates yaml files, template loaders, listing, descriptions
 │   └── ui/                 # ui utilities
+├── pkg/
+│   ├── config/             # config file management
+│   ├── module/             # module struct and factories
+│   ├── project/            # project struct, bootstrap, search, describe, sync
+│   └── subject/            # subject struct, factory, interactive CLI
 ├── demo/                   # VHS tape and recorded demo
 ├── LICENSE
 ├── README.md
@@ -150,7 +151,7 @@ This is the most common and most valued contribution. Subject types are the exte
 **Step 1 — Add the constant**
 
 ```go
-// internal/subject/types.go
+// pkg/subject/types.go
 const (
     SubjectEvent     SubjectType = "event"
     SubjectTask      SubjectType = "task"
@@ -165,7 +166,7 @@ const (
 All fields must use `omitempty` so they are invisible in YAML for subjects that don't use them. Never add required fields — every subject type shares the same struct.
 
 ```go
-// internal/subject/subject.go
+// pkg/subject/subject.go
 type Subject struct {
     // ... existing fields ...
 
@@ -180,7 +181,7 @@ type Subject struct {
 Add a branch in `interactiveCLI` for your type's specific fields:
 
 ```go
-// internal/subject/interactive.go
+// pkg/subject/interactive.go
 if st == SubjectMeeting {
     var agenda string
 
@@ -199,16 +200,6 @@ if st == SubjectMeeting {
 }
 ```
 
-**Step 4 — Register in the CLI command**
-
-```go
-// cmd/root.go
-var (
-	//...
-	SubjectValidArgs []cobra.Completion = []cobra.Completion{"event", "task", "topic", "objective", "meeting"}
-)
-```
-
 Add a map entry in `argsToSubject`:
 
 ```go
@@ -219,7 +210,7 @@ var (
 		"task":      subject.SubjectTask,
 		"topic":     subject.SubjectTopic,
 		"objective": subject.SubjectObjective,
-		"meeting": subject.SubjectMeeting,
+		"meeting":   subject.SubjectMeeting,
 	}
 )
 ```
@@ -227,8 +218,9 @@ var (
 Add a map entry in `argsToSubject` for which module the subject belongs to:
 
 ```go
-// internal/project/types.go
-// SubjectModuleMap maps each subject type to its corresponding storage module
+// pkg/project/types.go
+// SubjectModuleMap maps each subject type to its corresponding storage modules
+// It is used also to auto generate CMD accepted args
 var SubjectModuleMap = map[subject.SubjectType]module.ModuleType{
 	subject.SubjectEvent:     module.ModuleEvents,
 	subject.SubjectTask:      module.ModuleTasks,
@@ -238,9 +230,20 @@ var SubjectModuleMap = map[subject.SubjectType]module.ModuleType{
 }
 ```
 
-**Step 6 — Update README**
+**Step 4 - Update CMD flags**
+
+Add new struct fields to `addCmd` command flags
+
+```go
+	addCmd.Flags().StringVar(&ns.Agenda, "agenda", "", "Meeting agenda description")
+	addCmd.Flags().StringVar(&ns.MomFile, "mom-file", "", "minitues of meeting file link")
+```
+
+**Step 5 — Update README**
 
 Add your type to the Subject Types table in `README.md`.
+
+Update `doc/<section_.md>` for relevant section including your new subject.
 
 That's it. No core changes, no breaking changes, no migration needed. Existing `META.yaml` files are unaffected since new fields use `omitempty`.
 
@@ -318,7 +321,7 @@ Document your template — what domain it targets and what modules it includes.
 
 ### Improving Search
 
-The search pipeline lives in `internal/project/search_builder.go`. The current approach concatenates metadata fields into a `SearchStr` per subject and runs fuzzy matching against it. The full project tree is walked recursively via `walkModule`, building a flat `[]SearchDB` with `ModulePath` breadcrumbs.
+The search pipeline lives in `pkg/project/search_builder.go`. The current approach concatenates metadata fields into a `SearchStr` per subject and runs fuzzy matching against it. The full project tree is walked recursively via `walkModule`, building a flat `[]SearchDB` with `ModulePath` breadcrumbs.
 
 The same search is used by `find`, `metadata`, and `open` — improvements benefit all three commands automatically.
 
