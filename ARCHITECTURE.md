@@ -1,6 +1,6 @@
 # OperaTree Architecture Guide
 
-> **For Contributors:** This document explains OperaTree's design, codebase structure, and how all components work together. Use this to understand the project deeply and make informed contribution decisions.
+> **For Contributors:** This document explains OperaTree's design, codebase structure, and how all components work together. Use this to understand the project deeply and make informed contributions.
 
 ## Table of Contents
 
@@ -11,12 +11,14 @@
 5. [Path Resolution & Portability](#path-resolution--portability)
 6. [Core Concepts](#core-concepts)
 7. [Package Deep Dives](#package-deep-dives)
-8. [Subject Creation Deep Dive](#subject-creation-deep-dive)
-9. [Template System](#template-system)
-10. [Adding New Features](#adding-new-features)
-11. [Common Patterns](#common-patterns)
-12. [Testing Strategy](#testing-strategy)
-13. [Troubleshooting Guide](#troubleshooting-guide)
+8. [Subject System Architecture](#subject-system-architecture)
+9. [UUID-Based Subject Identification](#uuid-based-subject-identification)
+10. [Non-Interactive Mode & Scripting](#non-interactive-mode--scripting)
+11. [Template System](#template-system)
+12. [Adding New Features](#adding-new-features)
+13. [Common Patterns](#common-patterns)
+14. [Testing Strategy](#testing-strategy)
+15. [Troubleshooting Guide](#troubleshooting-guide)
 
 ---
 
@@ -40,7 +42,7 @@ OperaTree is built on three foundational pillars:
 
 ### 3. **Metadata Separation**
 
-- Each subject (Event, Task, Topic, Objective) has a `METADATA.yml` file
+- Each subject (Event, Task, Topic, Objective, DataSource) has a `METADATA.yml` file
 - Metadata is searchable, filterable, and machine-readable
 - Content can live in the same directory alongside metadata
 - Users can edit metadata with their preferred editor
@@ -54,17 +56,18 @@ OperaTree is built on three foundational pillars:
 ```
 ┌──────────────────────────────────────────────────┐
 │          CLI Layer (cmd/)                        │
-│  (Commands: new, find, bootstrap, sync, etc.)    │
+│  (Commands: add, find, create, sync, etc.)       │
 └──────────────────┬───────────────────────────────┘
                    │
 ┌──────────────────▼───────────────────────────────┐
-│       Business Logic Layer (internal/)           │
-│  project, subject, module, template, metadata    │
+│     Business Logic Layer (pkg/ + internal/)      │
+│  pkg/: project, subject, module, config          │
+│  internal/: filesystem, metadata, activitylog    │
 └──────────────────┬───────────────────────────────┘
                    │
 ┌──────────────────▼───────────────────────────────┐
 │       Persistence Layer (internal/)              │
-│  filesystem I/O, YAML serialization, config mgmt │
+│  filesystem I/O, YAML serialization              │
 └──────────────────┬───────────────────────────────┘
                    │
 ┌──────────────────▼───────────────────────────────┐
@@ -76,24 +79,24 @@ OperaTree is built on three foundational pillars:
 ### Component Relationships
 
 ```
-User Command (e.g., "operatree new event --name 'Cairo Visit'")
+User Command (e.g., "operatree add event --name 'Cairo Visit'")
         │
-        ├─→ cmd/new.go (CLI command handler)
+        ├─→ cmd/add.go (CLI command handler)
         │   ├─ Parse "event" argument (lowercase CLI input)
         │   ├─ Convert to SubjectType constant (UPPERCASE: "EVENT")
         │   ├─ Resolve project directory (-d flag)
-        │   └─ Call project.NewSubject()
+        │   └─ Call pkg/project.NewSubject()
         │
-        ├─→ internal/project/new_subject.go
+        ├─→ pkg/project/new_subject.go
         │   ├─ Validate subject type against SubjectModuleMap
         │   ├─ Find target module recursively
-        │   ├─ Create subject instance
+        │   ├─ Create subject instance with all supplied fields
         │   ├─ Run through subject factory
         │   ├─ Write to disk (creates dirs, files, metadata)
         │   ├─ Update project metadata
         │   └─ Log to activity.log
         │
-        └─→ internal/filesystem/ + internal/subject/
+        └─→ internal/filesystem/ + pkg/subject/
             └─→ Persist to disk (directories, files, YAML)
 ```
 
@@ -101,35 +104,80 @@ User Command (e.g., "operatree new event --name 'Cairo Visit'")
 
 ## Package Organization
 
-### Top-Level Structure
+### Directory Structure & Layer Classification
 
 ```
 operatree/
-├── cmd/                    # CLI commands (11 files)
+├── cmd/                    # CLI Layer (Cobra commands, 16+ files)
 │   ├── root.go            # Cobra setup, global flags, project resolution
-│   ├── new.go             # Create new subject (DYNAMIC subject type loading)
-│   ├── find.go            # Search subjects
-│   ├── bootstrap.go       # Create new project
+│   ├── add.go             # Create new subject (DYNAMIC subject type loading)
+│   ├── find.go            # Search subjects (interactive & non-interactive)
+│   ├── create.go          # Create new project
+│   ├── edit.go            # Edit subject metadata
+│   ├── rename.go          # Rename a subject
+│   ├── archive.go         # Archive a subject
 │   ├── sync.go            # Sync metadata from disk
 │   ├── summary.go         # Project statistics
+│   ├── describe.go        # Project structure
+│   ├── explain.go         # Directory philosophy guide
 │   ├── open.go            # Open subject in file manager
+│   ├── goto.go            # Jump to tracked project
 │   ├── show.go            # Display config/templates/tracked projects
 │   ├── track.go           # Add project to tracked list
 │   ├── untrack.go         # Remove project from tracked list
+│   ├── use.go             # Set default project
 │   ├── utilities.go       # Path resolution helpers
 │   └── version.go         # Version info
 │
-├── internal/              # Business logic (not exported)
+├── pkg/                    # PUBLIC API - Business Logic Layer
 │   ├── project/           # Project management & orchestration
+│   │   ├── types.go            # Project struct, SubjectModuleMap
+│   │   ├── new_subject.go      # Create new subject
+│   │   ├── load.go             # Load project from disk
+│   │   ├── hydrate.go          # Path hydration
+│   │   ├── bootstrap.go        # Create new project structure
+│   │   ├── factory.go          # Build project from template
+│   │   ├── sync.go             # Sync metadata from disk
+│   │   ├── list.go             # List all subjects
+│   │   ├── find.go             # Search subjects
+│   │   ├── project.go          # Project methods (Name, Dir, Archive, etc.)
+│   │   ├── archive.go          # Archive subjects
+│   │   ├── summary.go          # Project statistics
+│   │   └── describe.go         # Pretty-print project
+│   │
 │   ├── subject/           # Subject types & operations
+│   │   ├── types.go            # SubjectType constants, SubDirs, Files maps
+│   │   ├── subject.go          # Subject methods (WriteToDisk, Edit, etc.)
+│   │   ├── factory.go          # Subject creation factory
+│   │   ├── interactive.go      # Interactive CLI prompts
+│   │   └── name_factory.go     # Name generation logic
+│   │
 │   ├── module/            # Module (directory) structure
-│   ├── template/          # Project templates
-│   ├── config/            # Configuration management
-│   ├── filesystem/        # File I/O operations
+│   │   ├── types.go            # ModuleType constants, prefixes
+│   │   └── module.go           # Module methods (MkDir, Bootstrap, etc.)
+│   │
+│   └── config/            # Configuration management
+│       ├── types.go            # Config struct
+│       ├── config.go           # Load/Save config
+│       ├── find.go             # Fuzzy find projects
+│       └── ...
+│
+├── internal/              # PRIVATE - NOT exported
+│   ├── filesystem/        # File I/O operations (only internal used)
+│   │   └── filesystem.go       # All filesystem operations
+│   │
+│   ├── activitylog/       # Audit trail (only internal used)
+│   │   └── activitylog.go      # Action logging
+│   │
 │   ├── metadata/          # Metadata utilities
-│   ├── activitylog/       # Audit trail
-│   ├── runner/            # External command execution
+│   │   └── metadata.go         # Name formatting, etc.
+│   │
+│   ├── help/              # Embedded help files
+│   │   ├── help.go             # Embedding setup
+│   │   └── dir_struct.md       # Directory structure documentation
+│   │
 │   └── ui/                # Terminal UI formatting
+│       └── ui.go               # ANSI colors and formatting
 │
 ├── main.go                # Entry point
 ├── go.mod                 # Dependencies
@@ -139,88 +187,117 @@ operatree/
 └── README.md              # User documentation
 ```
 
-### Dependency Graph
+### Dependency Graph - CORRECTED
 
 ```
 cmd/ (depends on)
-  ├─→ internal/project/
-  ├─→ internal/subject/
-  ├─→ internal/config/
-  ├─→ internal/template/
-  ├─→ internal/runner/
+  ├─→ pkg/project/
+  ├─→ pkg/subject/
+  ├─→ pkg/config/
+  ├─→ internal/activitylog/
   └─→ internal/ui/
 
-internal/project/ (depends on)
-  ├─→ internal/module/
-  ├─→ internal/subject/
-  ├─→ internal/template/
+pkg/project/ (depends on)
+  ├─→ pkg/module/
+  ├─→ pkg/subject/
   ├─→ internal/filesystem/
   ├─→ internal/activitylog/
   └─→ internal/metadata/
 
-internal/subject/ (depends on)
+pkg/subject/ (depends on)
   ├─→ internal/metadata/
-  ├─→ internal/filesystem/
-  └─→ internal/runner/
-
-internal/module/ (depends on)
-  ├─→ internal/subject/
   └─→ internal/filesystem/
 
-internal/template/ (depends on)
-  ├─→ internal/module/
-  └─→ internal/project/
+pkg/module/ (depends on)
+  └─→ internal/filesystem/
+
+pkg/config/ (depends on)
+  └─→ [Standard library + third-party fuzzyfinder]
 
 internal/filesystem/ (depends on)
   └─→ [Standard library only]
+
+internal/activitylog/ (depends on)
+  └─→ [Standard library only]
+
+internal/metadata/ (depends on)
+  └─→ [Standard library only]
+
+internal/ui/ (depends on)
+  └─→ [Standard library only]
 ```
+
+### Package Layer Classification
+
+**`pkg/` — PUBLIC API**
+- Meant to be imported by external code
+- Contains core domain models and operations
+- Exported types and functions
+- **Includes:** project, subject, module, config
+
+**`internal/` — PRIVATE IMPLEMENTATION**
+- Not meant for external use
+- Go compiler enforces this at build time
+- Shared utilities and low-level operations
+- **Includes:** filesystem, activitylog, metadata, help, ui
+
+**`cmd/` — CLI COMMANDS**
+- Command-line interface layer
+- Depends on pkg/ and internal/
+- Not importable (though technically not enforced)
 
 ---
 
 ## Data Flow & Request Lifecycle
 
-### Example: Creating a New Event
+### Example: Creating a New Event (Non-Interactive)
 
 ```
-User Input: operatree new event --name "Cairo Visit" --date "2026-05-22" -d ~/myproject
+User Input: operatree add event --name "Cairo Visit" --date "2026-05-22" --location Cairo -d ~/myproject
 │
 ├─→ cmd/root.go :: Execute()
-│   └─→ Cobra parses flags and routes to newCmd
+│   └─→ Cobra parses flags and routes to addCmd
 │
 ├─→ cmd/root.go :: resolveProjectDir() (PreRun hook)
 │   ├─ Checks -d flag → actDir = ~/myproject
 │   └─ Converts "." to absolute path if needed
 │
-├─→ cmd/new.go :: newSubject()
+├─→ cmd/add.go :: newSubject()
 │   ├─ Get argument: "event" (lowercase from CLI)
 │   ├─ Convert to uppercase: "event" → "EVENT"
 │   ├─ Create SubjectType constant: subject.SubjectType("EVENT")
-│   ├─ Load project from actDir
-│   └─ Call project.NewSubject(&p, "Cairo Visit", "2026-05-22", SubjectEvent)
+│   ├─ Build Subject struct with CLI flags:
+│   │  Subject{
+│   │    Name: "Cairo Visit",
+│   │    Date: "2026-05-22",
+│   │    Location: "Cairo",
+│   │    Tags: ..., Notes: ..., etc.
+│   │  }
+│   ├─ Call pkg/project.Load(actDir)
+│   └─ Call pkg/project.NewSubject(&p, ns, SubjectEvent)
 │
-├─→ internal/project/new_subject.go :: NewSubject()
+├─→ pkg/project/new_subject.go :: NewSubject()
 │   ├─ Get all existing subjects (for name collision detection)
 │   ├─ Validate subject type exists in SubjectModuleMap
 │   ├─ Map SubjectEvent to ModuleEvents
 │   ├─ Recursively search project.Modules for ModuleEvents
 │   │
-│   ├─ Create initial subject struct:
-│   │  Subject{Type: EVENT, Name: "Cairo Visit", Date: "2026-05-22"}
+│   ├─ Create initial subject struct with all fields populated
 │   │
-│   ├─ Call subject.SubjectFactory(initialSubject, modulePath, existSubjects)
+│   ├─ Call pkg/subject.SubjectFactory(initialSubject, modulePath, existSubjects)
 │   │  └─→ Enters silent mode (name provided)
 │   │
 │   └─→ Call s.WriteToDisk()
-│       └─→ internal/subject/subject.go
+│       └─→ pkg/subject/subject.go
 │           ├─ Create subject directory: ~/myproject/01_EVENTS/2026-05-22-cairo-visit/
 │           ├─ Create subdirs: 01_AGENDA, 02_MEDIA, 03_NOTES, 04_DOCUMENTS, 05_OUTCOMES
 │           ├─ Create default files: (none for Events)
-│           └─ Write METADATA.yml with subject data
+│           └─ Write METADATA.yml with subject data (including UUID)
 │
 ├─→ Update project metadata
 │   ├─ Append subject to module.Subjects[]
 │   ├─ Write project METADATA.yml
-│   └─ internal/project/hydrate.go :: hydratePath() paths are recalculated
+│   └─ pkg/project/hydrate.go :: hydratePath() paths are recalculated
 │
 ├─→ Log action
 │   └─→ internal/activitylog/activitylog.go
@@ -228,7 +305,7 @@ User Input: operatree new event --name "Cairo Visit" --date "2026-05-22" -d ~/my
 │       ├─ Get user/hostname info
 │       └─ Append to activity.log in project root
 │
-└─→ Output confirmation
+└─→ Output confirmation with UUID
     └─→ "EVENT created: 2026-05-22-cairo-visit"
 ```
 
@@ -237,15 +314,16 @@ User Input: operatree new event --name "Cairo Visit" --date "2026-05-22" -d ~/my
 **Key Detail:** Subject types have **two representations** and use **dynamic loading**:
 
 ```
-CLI Argument          Internal Constant     Storage Module Type
-─────────────         ─────────────────     ───────────────────
-"event"    (lower)  → SubjectEvent("EVENT") → ModuleEvents
-"task"     (lower)  → SubjectTask("TASK")   → ModuleTasks
-"topic"    (lower)  → SubjectTopic("TOPIC") → ModuleTopics
-"objective"(lower)  → SubjectObjective("OBJECTIVE") → ModuleObjectives
+CLI Argument          Internal Constant          Storage Module Type
+─────────────         ─────────────────          ───────────────────
+"event"    (lower)  → SubjectEvent("EVENT")     → ModuleEvents
+"task"     (lower)  → SubjectTask("TASK")       → ModuleTasks
+"topic"    (lower)  → SubjectTopic("TOPIC")     → ModuleTopics
+"objective"(lower)  → SubjectObjective("OBJ")   → ModuleObjectives
+"datasource"(lower) → SubjectDataSource("DS")   → ModuleDataSources
 ```
 
-**Dynamic Loading in `cmd/new.go`:**
+**Dynamic Loading in `cmd/add.go`:**
 
 ```go
 func init() {
@@ -256,8 +334,8 @@ func init() {
         validSubjects = append(validSubjects, sn)
     }
 
-    newCmd = &cobra.Command{
-        Use:       fmt.Sprintf("new [%s]", strings.Join(validSubjects, " | ")),
+    addCmd = &cobra.Command{
+        Use:       fmt.Sprintf("add [%s]", strings.Join(validSubjects, " | ")),
         ValidArgs: validSubjects,  // Dynamically populated
         Args:      cobra.MatchAll(cobra.OnlyValidArgs, cobra.ExactArgs(1)),
         Run:       newSubject,
@@ -268,25 +346,26 @@ func newSubject(cmd *cobra.Command, args []string) {
     a := args[0]                              // "event" from CLI
     st := strings.ToUpper(a)                  // "EVENT"
     
-    // Convert to SubjectType constant
-    if err := project.NewSubject(&p, subjectName, subjectDate, subject.SubjectType(st)); err != nil {
+    // Convert to SubjectType constant and pass complete subject with all fields
+    if err := project.NewSubject(&p, ns, subject.SubjectType(st)); err != nil {
         log.Fatal(err)
     }
 }
 ```
 
-**Mapping Logic in `internal/project/types.go`:**
+**Mapping Logic in `pkg/project/types.go`:**
 
 ```go
 var SubjectModuleMap = map[subject.SubjectType]module.ModuleType{
-    subject.SubjectEvent:     module.ModuleEvents,
-    subject.SubjectTask:      module.ModuleTasks,
-    subject.SubjectTopic:     module.ModuleTopics,
-    subject.SubjectObjective: module.ModuleObjectives,
+    subject.SubjectEvent:      module.ModuleEvents,
+    subject.SubjectTask:       module.ModuleTasks,
+    subject.SubjectTopic:      module.ModuleTopics,
+    subject.SubjectObjective:  module.ModuleObjectives,
+    subject.SubjectDataSource: module.ModuleDataSources,
 }
 ```
 
-**Key Advantage:** When you add a new subject type, the CLI command automatically recognizes it without code changes to the new command!
+**Key Advantage:** When you add a new subject type, the CLI command automatically recognizes it without code changes to the add command!
 
 ---
 
@@ -305,14 +384,14 @@ All OperaTree commands support the `-d` (or `--dest`) flag, which specifies the 
 **Example:**
 
 ```bash
-operatree new event -d ~/work/reports/sales-2026
+operatree add event -d ~/work/reports/sales-2026
 ```
 
 ### Path Hydration Mechanism
 
 **Critical Concept:** Paths are **never persisted**; they're **hydrated at runtime**.
 
-When a project is loaded, `internal/project/hydrate.go` runs:
+When a project is loaded, `pkg/project/hydrate.go` runs:
 
 ```go
 func hydratePath(projectBaseDir string, p *Project) {
@@ -366,26 +445,30 @@ func hydrateModule(m *module.Module) {
 ### 2. **Modules**
 
 - **What:** Directories that organize subjects by category
-- **Types:** See `internal/module/types.go` for complete list:
+- **Types:** See `pkg/module/types.go` for complete list:
   - `00_ADMIN` — Governance, contacts, templates
   - `01_EVENTS` — Visits, workshops, meetings
-  - `02_PROJECT_MANAGEMENT` — Tasks, reports, risks (contains nested `05_TASKS`)
+  - `02_PROJECT_MANAGEMENT` — Tasks, reports, risks
   - `03_LEGAL` — Contracts, NDAs, compliance
-  - `04_RESEARCH` — Topics, objectives (contains nested modules)
+  - `04_RESEARCH` — Topics, objectives
   - `05_ENGINEERING` — Architecture, specs, decisions
   - `06_DATA` — Raw → staging → processed pipeline
+  - `05_TASKS` (nested under PM) — Operational tasks
+  - `07_TOPICS` (nested under Research) — Knowledge domains
+  - `08_OBJECTIVES` (nested under Research) — Research goals
   - `97_MEDIA_LIBRARY` — Shared reusable assets
   - `98_DELIVERABLES` — Final external outputs
   - `99_ARCHIVE` — Historical storage
-- **Nesting:** Some modules contain submodules (e.g., `05_TASKS` under `02_PROJECT_MANAGEMENT`)
+- **Nesting:** Some modules contain submodules (e.g., TASKS under PROJECT_MANAGEMENT)
 - **Storage:** `Module.Subjects[]` contains direct subjects; `Module.Modules[]` contains nested modules
 
 ### 3. **Subjects**
 
 - **What:** Trackable units of work or knowledge
-- **Types:** EVENT, TASK, TOPIC, OBJECTIVE (see `internal/subject/types.go`)
+- **Types:** EVENT, TASK, TOPIC, OBJECTIVE, DATASOURCE (see `pkg/subject/types.go`)
 - **Storage:** Each subject is a directory with `METADATA.yml`
 - **Structure:** Subjects auto-create subdirectories and default files based on their type
+- **Identification:** Each subject has a unique UUID (v7, sortable by timestamp)
 
 ### 4. **Metadata**
 
@@ -393,17 +476,19 @@ func hydrateModule(m *module.Module) {
 - **Location:** `subject-dir/METADATA.yml` or `project-dir/METADATA.yml`
 - **Format:** YAML (human-readable, version-control friendly)
 - **Editability:** Users can edit directly; `sync` command updates project index
+- **Auto-Sync:** `edit` command automatically syncs after editor closes
 
 ### 5. **Activity Log**
 
 - **What:** Append-only audit trail of all changes
 - **Location:** `project-root/activity.log`
 - **Format:** Tab-separated values
-- **Entries:** Timestamp, action (CREATE/EDIT/DELETE/ARCHIVE), type, name, user@host, version
+- **Entries:** Timestamp, action (CREATE/EDIT/ARCHIVE/RENAME), type, name, user@host, version
 
 **Example entry:**
 ```
-2026-05-20T10:08:39Z	CREATE  	EVENT        	"2026-05-22-cairo-visit"	hany@optiplex7040	v0.1.0
+2026-05-20T10:08:39Z	CREATE    	EVENT        	"2026-05-22-cairo-visit"	hany@optiplex7040	v0.1.0
+2026-05-20T14:05:03Z	RENAME    	TASK         	"Prepare Report"        	hany@optiplex7040	v0.1.2
 ```
 
 ---
@@ -414,137 +499,86 @@ func hydrateModule(m *module.Module) {
 
 **Purpose:** Command-line interface, argument parsing, user interaction
 
+**Command Refactoring Summary:**
+
+| Old Name | New Name | Purpose |
+|----------|----------|---------|
+| `new` | `add` | Create new subject |
+| `bootstrap` | `create` | Create new project |
+| `metadata` | `edit` | Edit subject metadata |
+| `default` | `use` | Set default project |
+| `jump` | `goto` | Open tracked project |
+
 **Key Files:**
 
 - **`root.go`** — Cobra setup, global flags, config loading, path resolution
-  - Loads configuration at startup
-  - Defines global variables: `destDir`, `actDir`, `cfg`, `verbose`
-  - Sets up root command
+- **`add.go`** — Create new subject (DYNAMIC subject type loading from `pkg/project.SubjectModuleMap`)
+- **`find.go`** — Search subjects (interactive & non-interactive)
+- **`create.go`** — Create new project (replaces `bootstrap`)
+- **`edit.go`** — Edit subject metadata (auto-syncs after save)
+- **`rename.go`** — Rename a subject with cross-reference updates
+- **`archive.go`** — Archive a subject to 99_ARCHIVE
+- **`sync.go`** — Sync project metadata from disk
+- **`show.go`** — Display config/templates/tracked projects
+- **`track.go`/`untrack.go`** — Manage tracked projects
+- **`use.go`** — Set default project (replaces `default`)
+- **`goto.go`** — Jump to tracked project (replaces `jump`)
 
-- **`utilities.go`** — Path resolution helpers
-  - `resolveProjectDir()` — Resolves `-d` flag for project commands
-  - `resolveBaseDir()` — Resolves `-d` flag for base directory commands
-  - `resolveProjectDirSkippingConfig()` — Ignores config, only uses explicit flags
-
-- **`new.go`** — Create new subject
-  - **DYNAMICALLY loads valid subject types** from `project.SubjectModuleMap`
-  - Converts CLI argument (lowercase) to SubjectType constant (uppercase)
-  - Calls `project.NewSubject()` with subject type
-  - **No static map needed** — automatically picks up new subject types!
-
-- **`bootstrap.go`** — Create new project
-  - Takes project name and template name
-  - Uses `-d` for base directory (where project is created)
-  - Calls `project.Bootstrap()`
-
-- **`find.go`** — Search subjects
-  - Fuzzy search by type and term
-  - Calls `project.FindSubjects()`
-
-- **`sync.go`** — Sync project metadata
-  - Walks all subjects on disk
-  - Updates project in-memory from METADATA.yml files
-  - Calls `project.Sync()`
-
-- **`summary.go`** — Project statistics
-  - Displays high-level project overview
-  - Subject counts by type
-
-- **`open.go`** — Open subject in file manager
-  - Finds subject, opens its directory
-
-- **`show.go`** — Display information
-  - Shows tracked projects, config, templates, default project
-  - No project `-d` flag needed
-
-- **`track.go`** — Add project to tracked list
-  - Adds project to config for future default project usage
-  - Requires `-d` flag
-
-- **`untrack.go`** — Remove project from tracked list
-  - Removes project from config
-  - Requires `-d` flag
-
-**Command Pattern:**
+**Import Pattern:**
 
 ```go
-// Typical command handler pattern
-func init() {
-    cmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
-    cmd.PreRun = resolveProjectDir  // Resolve -d before running
-    rootCmd.AddCommand(cmd)
-}
-
-func commandHandler(cmd *cobra.Command, args []string) {
-    // 1. Load project (uses already-resolved actDir)
-    p, err := project.Load(actDir)
-    if err != nil { log.Fatal(err) }
-
-    // 2. Call business logic
-    if err := project.SomeFunction(&p, args); err != nil {
-        log.Fatal(err)
-    }
-}
+import (
+    "github.com/hanymamdouh82/operatree/pkg/project"
+    "github.com/hanymamdouh82/operatree/pkg/subject"
+    "github.com/hanymamdouh82/operatree/pkg/config"
+)
 ```
 
 ---
 
-### `internal/project/` — Project Management
+### `pkg/project/` — Project Management (PUBLIC API)
 
 **Purpose:** High-level project operations, orchestration, template application
 
-**Key Files:**
+**Location:** `operatree/pkg/project/`
 
-- **`project.go`** — Project type methods
-  - `ProjectName()` — Get project name
-  - `ProjectDir()` — Get absolute project path
-  - `ProjectBaseDir()` — Get parent directory
-  - `Describe()` — Pretty-print project
-  - `WriteMetadata()` — Persist project METADATA.yml
-  - `ModuleExists()` — Check if module exists
-  - `Archive()` — Archive a subject
+**Key Files:**
 
 - **`types.go`** — Type definitions
   - `Project` struct with `absDir` (hydrated absolute path)
   - `SubjectModuleMap` — Maps each subject type to its storage module
-  - Metadata file constant: `METADATA_FILE = "METADATA.yml"`
-  - Archive destination constant: `ARCHIVED_DEST = "closed_tasks"`
+  - Constants: `METADATA_FILE = "METADATA.yml"`, `ARCHIVED_DEST = "closed_tasks"`
 
 - **`new_subject.go`** — Create new subject
   - `NewSubject()` — Main orchestration function
   - `findModule()` — Recursively search for target module by type
-  - Validates subject type, finds module, creates subject, persists to disk
 
 - **`load.go`** — Load project from disk
   - `Load(path)` — Reads METADATA.yml and calls `hydratePath()`
 
-- **`hydrate.go`** — Path hydration
+- **`hydrate.go`** — Path hydration at runtime
   - `hydratePath()` — Set absolute paths on project and all modules
-  - `hydrateModule()` — Recursive path hydration for nested modules
-  - Sets `AbsPath` on all modules and `DirName` on all subjects
 
 - **`bootstrap.go`** — Create new project structure
   - `Bootstrap()` — Load template, create project, create directories
-  - Calls `internal/template/Load()` to get template
-  - Calls `internal/project/Factory()` to build project structure
-  - Calls `module.Bootstrap()` to create directories
 
 - **`factory.go`** — Build project from template
   - `Factory()` — Convert template to project structure
-  - `parseModule()` — Recursively parse template modules to module objects
 
 - **`sync.go`** — Sync metadata from disk
   - `Sync()` — Read all subject METADATA.yml files and update project
-  - `syncModule()` — Recursively sync all subjects in a module
 
-- **`list_subjects.go`** — List all subjects
-  - `ListSubjects()` — Flatten project tree into list of all subjects
+- **`list.go`** — List all subjects
+  - `ListSubjects()` — Flatten project tree into list, optionally filtered by type
 
-- **`find_subjects.go`** — Search subjects
-  - `FindSubjects()` — Fuzzy search by type and term
+- **`find.go`** — Search subjects
+  - `FindSubject()` — Fuzzy search (interactive, single result)
+  - `FindSubjectsSilent()` — Fuzzy search (non-interactive, multiple results)
 
-- **`describe.go`** — Pretty-print project
-  - Formatted project output for terminal display
+- **`project.go`** — Project methods
+  - `ProjectName()` — Get project name
+  - `ProjectDir()` — Get absolute project path
+  - `WriteMetadata()` — Persist project METADATA.yml
 
 - **`archive.go`** — Archive subjects
   - `Archive()` — Move subject to 99_ARCHIVE module
@@ -556,152 +590,75 @@ func commandHandler(cmd *cobra.Command, args []string) {
 
 ```go
 type Project struct {
-    Name     string          // e.g., "myproject"
-    Template string          // e.g., "dev"
-    absDir   string          // project absolute directory, hydrated at load time
-    Tags     []string        // Project-level tags
-    Modules  []module.Module // Top-level modules (can contain nested modules)
-}
-```
-
-**Key Pattern:**
-
-```go
-// Create new subject - orchestration function
-func NewSubject(p *Project, subjectName, subjectDate string, st subject.SubjectType) error {
-    // 1. Validate subject type exists in map
-    tmt, exists := SubjectModuleMap[st]
-    if !exists {
-        return fmt.Errorf("unsupported subject type: %s", string(st))
-    }
-
-    // 2. Find target module recursively
-    tm, err := findModule(p.Modules, tmt)
-    if err != nil { return err }
-
-    // 3. Create subject through factory
-    s, err := subject.SubjectFactory(initialSubject, tm.AbsPath, allSubjects)
-    if err != nil { return err }
-
-    // 4. Persist to disk
-    if err := s.WriteToDisk(); err != nil { return err }
-
-    // 5. Update project metadata
-    tm.Subjects = append(tm.Subjects, s)
-    if err := p.WriteMetadata(); err != nil { return err }
-
-    // 6. Log action
-    activitylog.Log(p.ProjectDir(), activitylog.ActionCreate, string(st), s.Name)
-    
-    return nil
+    Name     string          `yaml:"name"`
+    Template string          `yaml:"template"`
+    absDir   string          `yaml:"-"` // project absolute directory, hydrated during load
+    Tags     []string        `yaml:"tags"`
+    Modules  []module.Module `yaml:"modules"`
 }
 ```
 
 ---
 
-### `internal/subject/` — Subject Types & Operations
+### `pkg/subject/` — Subject Types & Operations (PUBLIC API)
 
-**Purpose:** Subject struct definitions, factory pattern, persistence, configuration
+**Location:** `operatree/pkg/subject/`
 
 **Key Files:**
 
 - **`types.go`** — Type definitions and configuration maps
-  - Subject type constants (uppercase): `SubjectEvent = "EVENT"`, etc.
-  - Metadata file constant: `METADATA_FILE = "METADATA.yml"`
-  - **`SubDirs` map** — Defines default subdirectories created for each subject type
-  - **`Files` map** — Defines default files created for each subject type
+  - Subject type constants: `SubjectEvent`, `SubjectTask`, `SubjectTopic`, `SubjectObjective`, `SubjectDataSource`
+  - Constant: `METADATA_FILE = "METADATA.yml"`
+  - `SubDirs` map — Default subdirectories for each subject type
+  - `Files` map — Default files for each subject type
 
 - **`subject.go`** — Subject operations
-  - `MkDir()` — Create subject directory
-  - `MkSubDirs()` — Create all subdirectories
-  - `WriteFiles()` — Create default files with headers
-  - `WriteMetadata()` — Write METADATA.yml
   - `WriteToDisk()` — Orchestration: creates dir → subdirs → files → metadata
-  - `Describe()` — Pretty-print subject
-  - `EditMetadata()` — Open metadata in editor
 
 - **`factory.go`** — Subject creation factory
   - `SubjectFactory()` — Main factory function
-  - `silent()` — Factory for non-interactive mode (used by CLI commands)
-  - `interactive()` — Factory for interactive mode (prompts user)
-  - `nameFactory()` — Generate directory name based on type
+  - `silent()` — Factory for non-interactive mode
+  - `interactive()` — Factory for interactive mode
 
 - **`interactive.go`** — Interactive CLI prompts
   - `interactiveCLI()` — Prompt user for subject properties
-  - Type-specific prompts for EVENT, TASK, TOPIC, OBJECTIVE
 
-**Configuration Maps:**
-
-```go
-// Default subdirectories created during subject creation
-var SubDirs SubjectDirMap = SubjectDirMap{
-    SubjectEvent: {
-        "01_AGENDA",
-        "02_MEDIA",
-        "03_NOTES",
-        "04_DOCUMENTS",
-        "05_OUTCOMES",
-    },
-    SubjectTask: {
-        "01_INPUTS",
-        "02_WORKING",
-        "03_REVIEW",
-        "04_FINAL",
-    },
-    // Topics and Objectives have no default subdirs
-}
-
-// Default files created during subject creation
-var Files SubjectFilesMap = SubjectFilesMap{
-    SubjectTopic: {
-        "overview.md",
-        "notes.md",
-    },
-    SubjectObjective: {
-        "definitions.md",
-        "findings.md",
-        "strategy.md",
-    },
-    // Events and Tasks have no default files
-}
-```
+- **`name_factory.go`** — Name generation logic
+  - `nameFactory()` — Generate directory name by type
 
 **Subject Struct:**
 
 ```go
 type Subject struct {
-    Type              SubjectType `yaml:"type"`
-    Name              string      `yaml:"name"`
-    DirName           string      `yaml:"-"`  // Not persisted, hydrated at load
-    SubDirs           []string    `yaml:"subDirs"`
-    Files             []string    `yaml:"-"` // Not persisted, used for creation only
-    Date              string      `yaml:"date"`
-    Tags              []string    `yaml:"tags"`
-    Notes             string      `yaml:"notes"`
-    // Custom fields for specific types (use omitempty)
-    Paricipants       []string `yaml:"paricipants,omitempty"`
-    Location          string   `yaml:"location,omitempty"`
-    Owner             string   `yaml:"owner,omitempty"`
-    Status            string   `yaml:"status,omitempty"`
-    RelatedObjective  string   `yaml:"related_objective,omitempty"`
-    RelatedEvents     []string `yaml:"related_events,omitempty"`
-    Outputs           []string `yaml:"outputs,omitempty"`
+    UUID               string      `yaml:"uuid"`  // Unique identifier (v7 UUID)
+    Type               SubjectType `yaml:"type"`
+    Name               string      `yaml:"name"`
+    DirName            string      `yaml:"-"`  // Not persisted, hydrated at load
+    SubDirs            []string    `yaml:"subDirs"`
+    Files              []string    `yaml:"-"` // Not persisted, used for creation only
+    Date               string      `yaml:"date"`
+    Tags               []string    `yaml:"tags"`
+    Notes              string      `yaml:"notes"`
+    // Type-specific fields
+    Participants       []string `yaml:"participants,omitempty"`
+    Location           string   `yaml:"location,omitempty"`
+    Owner              string   `yaml:"owner,omitempty"`
+    Status             string   `yaml:"status,omitempty"`
+    RelatedObjective   string   `yaml:"related_objective,omitempty"`
+    RelatedEvents      []string `yaml:"related_events,omitempty"`
+    Outputs            []string `yaml:"outputs,omitempty"`
+    Source             string   `yaml:"source,omitempty"`          // DataSource
+    SourceLink         string   `yaml:"sourceLink,omitempty"`      // DataSource
+    SourceObjective    string   `yaml:"sourceObjective,omitempty"` // DataSource
+    SourceDataSize     string   `yaml:"sourceDataSize,omitempty"`  // DataSource
 }
-```
-
-**Name Factory Logic:**
-
-```go
-// Names are auto-generated based on type and input
-EVENT:     "2026-05-22-cairo-visit"      (date-hyphenated-name)
-TASK:      "2026-05-22-fix-bug"          (date-hyphenated-name)
-TOPIC:     "machine-learning"            (hyphenated-name only)
-OBJECTIVE: "increase-reliability"        (hyphenated-name only)
 ```
 
 ---
 
-### `internal/module/` — Module Structure
+### `pkg/module/` — Module Structure (PUBLIC API)
+
+**Location:** `operatree/pkg/module/`
 
 **Purpose:** Directory structure organization, module types, filesystem bootstrap
 
@@ -710,7 +667,6 @@ OBJECTIVE: "increase-reliability"        (hyphenated-name only)
 - **`types.go`** — Type definitions and prefix mapping
   - `ModuleType` constants (uppercase): `ModuleAdmin = "ADMIN"`, etc.
   - `ModuleDirPrefixMap` — Maps module type to directory prefix (00-99)
-  - Complete list of all module types
 
 - **`module.go`** — Module operations
   - `MkDir()` — Create module directory
@@ -720,129 +676,50 @@ OBJECTIVE: "increase-reliability"        (hyphenated-name only)
 **Module Types & Prefixes:**
 
 ```
-ModuleAdmin              → "00_ADMIN"
-ModuleEvents            → "01_EVENTS"
-ModuleProjectManagement → "02_PROJECT_MANAGEMENT"
-ModuleLegal             → "03_LEGAL"
-ModuleResearch          → "04_RESEARCH"
-ModuleEngineering       → "05_ENGINEERING"
-ModuleData              → "06_DATA"
-ModuleTasks             → "05_TASKS"              (nested under PM)
-ModuleTopics            → "07_TOPICS"            (nested under Research)
-ModuleObjectives        → "08_OBJECTIVES"        (nested under Research)
-ModuleMediaLibrary      → "97_MEDIA_LIBRARY"
-ModuleDeliverables      → "98_DELIVERABLES"
-ModuleArchive           → "99_ARCHIVE"
-```
-
-**Module Struct:**
-
-```go
-type Module struct {
-    Type     ModuleType        `yaml:"type"`
-    Name     string            `yaml:"name"`      // e.g., "01_EVENTS"
-    AbsPath  string            `yaml:"-"`         // Absolute path, hydrated at load
-    Modules  []Module          `yaml:"modules"`   // Nested modules
-    Subjects []subject.Subject `yaml:"subjects"`  // Direct subjects
-    SubDirs  []string          `yaml:"subDirs"`   // Flat subdirectories
-}
+ModuleAdmin              → "00"
+ModuleEvents            → "01"
+ModuleProjectManagement → "02"
+ModuleLegal             → "03"
+ModuleResearch          → "04"
+ModuleEngineering       → "05"
+ModuleData              → "06"
+ModuleTasks             → "05" (nested under PROJECT_MANAGEMENT)
+ModuleTopics            → "07" (nested under RESEARCH)
+ModuleObjectives        → "08" (nested under RESEARCH)
+ModuleDataSources       → "13" (nested under DATA)
+ModuleMediaLibrary      → "97"
+ModuleDeliverables      → "98"
+ModuleArchive           → "99"
 ```
 
 ---
 
-### `internal/template/` — Project Templates
+### `pkg/config/` — Configuration Management (PUBLIC API)
 
-**Purpose:** Define project structures, module hierarchies, default layouts
-
-**Key Files:**
-
-- **`types.go`** — Type definitions
-  - `OTTemplate` — Template structure
-  - `ModuleTemplate` — Nested template structure
-  - `Templates` map — Available templates: "general", "dev", "consulting", "research"
-
-- **`list.go`** — List templates
-  - `ListTemplates()` — Display all available templates
-
-- **`load.go`** — Load template from embedded YAML
-  - `Load(name)` — Load template by name
-
-- **`template_*.yml`** — Template YAML files (embedded)
-  - `template_general.yml` — Minimal structure
-  - `template_dev.yml` — Software development
-  - `template_consulting.yml` — Client engagement
-  - `template_research.yml` — Academic/R&D
-
-**Template Structure Example:**
-
-```yaml
-# template_dev.yml
-name: dev
-description: Software development project template
-modules:
-  - type: ADMIN
-    name: ADMIN
-    subDirs: []
-  - type: EVENTS
-    name: EVENTS
-    subDirs: []
-  - type: PROJECT_MANAGEMENT
-    name: PROJECT_MANAGEMENT
-    subDirs: []
-    modules:
-      - type: TASKS
-        name: TASKS
-        subDirs: []
-  # ... more modules
-```
-
----
-
-### `internal/config/` — Configuration Management
+**Location:** `operatree/pkg/config/`
 
 **Purpose:** User configuration, project tracking, persistence
 
 **Key Files:**
 
+- **`types.go`** — Type definitions
+  - `Config` struct with projects list and default project
+  - `Project` struct with name, path, template
+
 - **`config.go`** — Configuration operations
-  - Config file location: `~/.config/operatree/operatree.yaml`
-  - Respects `XDG_CONFIG_HOME` environment variable for Linux users
   - `Load()` — Load config from YAML
   - `Save()` — Persist config to YAML
   - `AddProject()` — Register new project
-  - `RemoveProject()` — Unregister project
   - `SetDefaultProject()` — Set default project
 
-**Config File Location:**
-
-```
-Linux:   $XDG_CONFIG_HOME/operatree/operatree.yaml  (or ~/.config/operatree/operatree.yaml)
-macOS:   ~/Library/Application Support/operatree/operatree.yaml
-Windows: %APPDATA%\operatree\operatree.yaml
-```
-
-**Config Structure:**
-
-```yaml
-standardDir: /home/user/projects
-editor: nvim
-fileManager: nautilus
-default:
-  name: myproject
-  absPath: /home/user/projects/myproject
-  template: dev
-projects:
-  - name: myproject
-    absPath: /home/user/projects/myproject
-    template: dev
-  - name: research-2026
-    absPath: /home/user/projects/research-2026
-    template: research
-```
+- **`find.go`** — Fuzzy find projects
+  - `Find()` — Interactive project search
 
 ---
 
-### `internal/filesystem/` — File I/O
+### `internal/filesystem/` — File I/O (PRIVATE)
+
+**Location:** `operatree/internal/filesystem/`
 
 **Purpose:** All filesystem operations encapsulated here
 
@@ -852,18 +729,21 @@ projects:
 - `CreateDir(path)` — Create directory (fails if exists)
 - `ReadFile(path)` — Read file contents
 - `StructToFile(struct, path)` — Marshal Go struct to YAML file
+- `FileToStruct(struct, path)` — Unmarshal YAML file to Go struct
 - `TextToMDFile(text, path)` — Write text to file
 - `Archive(src, dest)` — Move file/directory to archive
+- `RenameDir(src, dest)` — Rename directory
 
-**Design Philosophy:** Single responsibility — all filesystem I/O goes through this package. Makes it:
-
+**Design Philosophy:** Single responsibility — all filesystem I/O goes through this package:
 - Easy to mock for testing
 - Centralized error handling
 - Future enhancement opportunity (permissions, backups, etc.)
 
 ---
 
-### `internal/activitylog/` — Audit Trail
+### `internal/activitylog/` — Audit Trail (PRIVATE)
+
+**Location:** `operatree/internal/activitylog/`
 
 **Purpose:** Log all user actions for audit and undo
 
@@ -875,8 +755,9 @@ type Action string
 const (
     ActionCreate  Action = "CREATE"
     ActionEdit    Action = "EDIT"
-    ActionDelete  Action = "DELETE"
     ActionArchive Action = "ARCHIVE"
+    ActionRename  Action = "RENAME"
+    ActionDelete  Action = "DELETE"  // Planned
 )
 ```
 
@@ -885,40 +766,46 @@ const (
 ```
 timestamp                 action    type        name                      user@host            version
 2026-05-20T10:08:39Z     CREATE    EVENT       "2026-05-22-cairo-visit"  hany@optiplex7040    v0.1.0
+2026-05-20T14:05:03Z     RENAME    TASK        "Prepare Report"          hany@optiplex7040    v0.1.2
 ```
 
 **Key Operations:**
 
-- `Log(projectRoot, action, subjectType, subjectName)` �� Record action
-- `AppVersion` — Set from main.go build flags
+- `Log(projectRoot, action, subjectType, subjectName)` — Record action
 
-**Design:** Append-only, pipe-friendly for Unix integration (can be piped to `grep`, `cut`, `awk`, etc.)
+**Design:** Append-only, pipe-friendly for Unix integration
 
 ---
 
-### `internal/metadata/` — Metadata Utilities
+### `internal/metadata/` — Metadata Utilities (PRIVATE)
+
+**Location:** `operatree/internal/metadata/`
 
 **Purpose:** Metadata parsing, name formatting
 
 **Key Operations:**
 
 - `FormatName(name)` — Sanitize and hyphenate names
-- YAML marshaling/unmarshaling using `gopkg.in/yaml.v3`
+- YAML marshaling/unmarshaling
 
 ---
 
-### `internal/runner/` — External Command Execution
+### `internal/help/` — Embedded Help (PRIVATE)
 
-**Purpose:** Execute external programs (editor, file manager)
+**Location:** `operatree/internal/help/`
 
-**Key Operations:**
+**Purpose:** Embedded documentation files
 
-- `EditFile(path)` — Open file in configured editor
-- `OpenFileManager(path)` — Open directory in file manager
+**Files:**
+
+- `dir_struct.md` — Directory structure philosophy and guide
+- `help.go` — Embedding setup with `go:embed`
 
 ---
 
-### `internal/ui/` — Terminal Formatting
+### `internal/ui/` — Terminal UI Formatting (PRIVATE)
+
+**Location:** `operatree/internal/ui/`
 
 **Purpose:** Pretty-printing, colored output, terminal aesthetics
 
@@ -937,509 +824,308 @@ AnsiGreen   = "\033[38;5;114m"
 
 ---
 
-## Subject Creation Deep Dive
+## Subject System Architecture
 
-Understanding subject creation is crucial for contributors. Here's the complete flow:
+### Five Subject Types
 
-### Step 1: CLI Parsing with Dynamic Loading
+The system now supports five types of subjects:
 
-```bash
-operatree new event --name "Cairo Visit" --date "2026-05-22"
-```
+#### 1. **Event**
+- **Module:** `01_EVENTS`
+- **Purpose:** Record project activities (meetings, visits, workshops)
+- **Key Fields:** location, participants, date
+- **Subdirectories:** 01_AGENDA, 02_MEDIA, 03_NOTES, 04_DOCUMENTS, 05_OUTCOMES
+- **Directory Naming:** `YYYY-MM-DD-hyphenated-name`
 
-**In `cmd/new.go` init():**
+#### 2. **Task**
+- **Module:** `02_PROJECT_MANAGEMENT/05_TASKS`
+- **Purpose:** Unit of work with lifecycle
+- **Key Fields:** owner, status, related_events, outputs
+- **Subdirectories:** 01_INPUTS, 02_WORKING, 03_REVIEW, 04_FINAL
+- **Directory Naming:** `YYYY-MM-DD-hyphenated-name`
 
-```go
-func init() {
-    // 1. DYNAMICALLY build valid subjects from SubjectModuleMap
-    for k := range project.SubjectModuleMap {
-        sn := strings.ToLower(string(k))
-        validSubjects = append(validSubjects, sn)
-    }
-    
-    // 2. Create command with dynamic ValidArgs
-    newCmd = &cobra.Command{
-        Use:       fmt.Sprintf("new [%s]", strings.Join(validSubjects, " | ")),
-        ValidArgs: validSubjects,  // ["event", "task", "topic", "objective"]
-        Args:      cobra.MatchAll(cobra.OnlyValidArgs, cobra.ExactArgs(1)),
-        Run:       newSubject,
-    }
-    
-    // 3. Add flags and set PreRun hook
-    newCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
-    newCmd.Flags().StringVar(&subjectName, "name", "", "subject name")
-    newCmd.Flags().StringVar(&subjectDate, "date", "", "subject date")
-    newCmd.PreRun = resolveProjectDir
-    rootCmd.AddCommand(newCmd)
-}
-```
+#### 3. **Topic**
+- **Module:** `04_RESEARCH/07_TOPICS`
+- **Purpose:** Knowledge concept or domain area
+- **Key Fields:** related_objective, tags, notes
+- **Default Files:** overview.md, notes.md
+- **Subdirectories:** 01_DIAGRAMS, 02_ATTACHMENTS
+- **Directory Naming:** `hyphenated-name`
 
-**In `cmd/new.go` newSubject():**
+#### 4. **Objective**
+- **Module:** `04_RESEARCH/08_OBJECTIVES`
+- **Purpose:** Goal driving research and decisions
+- **Key Fields:** status, outputs, tags
+- **Default Files:** definitions.md, findings.md, strategy.md
+- **Subdirectories:** 01_NOTES, 02_DISCUSSIONS, 03_ATTACHMENTS
+- **Directory Naming:** `hyphenated-name`
 
-```go
-func newSubject(cmd *cobra.Command, args []string) {
-    a := args[0]  // "event" (lowercase CLI input)
-    
-    // Convert to uppercase and create SubjectType constant
-    st := strings.ToUpper(a)  // "EVENT"
-    
-    // Load project with path hydration
-    p, err := project.Load(actDir)
-    if err != nil { log.Fatal(err) }
-    
-    // Pass to business logic - no mapping needed, direct type creation
-    if err := project.NewSubject(&p, subjectName, subjectDate, subject.SubjectType(st)); err != nil {
-        log.Fatal(err)
-    }
-}
-```
+#### 5. **DataSource** (New)
+- **Module:** `06_DATA/13_DATASOURCES`
+- **Purpose:** External dataset or data feed
+- **Key Fields:** source, source_link, source_objective, source_datasize
+- **Default Files:** source.md
+- **Directory Naming:** `hyphenated-name`
+- **Example:** "sensor-readings-2025", "kaggle-datasets-ml"
 
-### Step 2: Subject Factory
-
-**In `internal/project/new_subject.go`:**
-
-```go
-func NewSubject(p *Project, subjectName, subjectDate string, st subject.SubjectType) error {
-    // 1. Create initial subject struct
-    is := subject.Subject{
-        Type: st,                // SubjectEvent ("EVENT")
-        Name: subjectName,       // "Cairo Visit"
-        Date: subjectDate,       // "2026-05-22"
-    }
-    
-    // 2. Get target module
-    tmt := SubjectModuleMap[st]  // ModuleEvents
-    tm, err := findModule(p.Modules, tmt)
-    if err != nil { return err }
-    
-    // 3. Call factory - this does all the setup
-    s, err := subject.SubjectFactory(is, tm.AbsPath, listOfExistingSubjects)
-    if err != nil { return err }
-    
-    // 4. Persist to disk
-    if err := s.WriteToDisk(); err != nil { return err }
-    
-    // 5. Update project and log
-    tm.Subjects = append(tm.Subjects, s)
-    if err := p.WriteMetadata(); err != nil { return err }
-    
-    activitylog.Log(p.ProjectDir(), activitylog.ActionCreate, string(st), s.Name)
-    
-    return nil
-}
-```
-
-### Step 3: Subject Factory - Silent Mode
-
-**In `internal/subject/factory.go`:**
-
-```go
-func SubjectFactory(s Subject, ppth string, pss []Subject) (Subject, error) {
-    // Since Name is provided, use silent mode (not interactive)
-    if s.Name == "" {
-        return interactive(s.Type, ppth, pss)  // Interactive mode
-    }
-    
-    return silent(s, ppth)  // Silent mode (CLI commands)
-}
-
-func silent(s Subject, ppth string) (Subject, error) {
-    // 1. Set default subdirectories from configuration map
-    s.SubDirs = SubDirs[s.Type]  // For EVENT: [01_AGENDA, 02_MEDIA, ...]
-    s.Files = Files[s.Type]      // For EVENT: [] (no files)
-    
-    // 2. Generate directory name using name factory
-    s.Name = nameFactory(s)      // "2026-05-22-cairo-visit"
-    
-    // 3. Compute absolute path
-    s.DirName = path.Join(ppth, s.Name)  // ~/project/01_EVENTS/2026-05-22-cairo-visit
-    
-    return s, nil
-}
-
-func nameFactory(s Subject) string {
-    switch s.Type {
-    case SubjectEvent:
-        sn := metadata.FormatName(s.Name)      // "cairo-visit"
-        if s.Date != "" {
-            sn = fmt.Sprintf("%s-%s", s.Date, sn)  // "2026-05-22-cairo-visit"
-        }
-        return sn
-    case SubjectTask:
-        sn := metadata.FormatName(s.Name)
-        return fmt.Sprintf("%s-%s", s.Date, sn)
-    case SubjectTopic:
-        return metadata.FormatName(s.Name)
-    default:
-        return s.Name
-    }
-}
-```
-
-### Step 4: Write to Disk
-
-**In `internal/subject/subject.go`:**
-
-```go
-func (s *Subject) WriteToDisk() error {
-    // 1. Create subject directory
-    if err := s.MkDir(); err != nil { return err }
-    // Creates: ~/project/01_EVENTS/2026-05-22-cairo-visit/
-    
-    // 2. Create all subdirectories
-    if err := s.MkSubDirs(); err != nil { return err }
-    // Creates: 01_AGENDA/, 02_MEDIA/, 03_NOTES/, 04_DOCUMENTS/, 05_OUTCOMES/
-    
-    // 3. Create default files
-    if err := s.WriteFiles(); err != nil { return err }
-    // For EVENT: creates nothing
-    // For TOPIC: creates overview.md, notes.md
-    
-    // 4. Write metadata file
-    if err := s.WriteMetadata(); err != nil { return err }
-    // Creates: METADATA.yml with subject data (marshaled to YAML)
-    
-    return nil
-}
-```
-
-### Step 5: Result on Disk
-
-After successful creation:
+### Subject Lifecycle
 
 ```
-~/project/01_EVENTS/
-└── 2026-05-22-cairo-visit/
-    ├── METADATA.yml              # Subject metadata (YAML)
-    ├── 01_AGENDA/                # Empty directory
-    ├── 02_MEDIA/                 # Empty directory
-    ├── 03_NOTES/                 # Empty directory
-    ├── 04_DOCUMENTS/             # Empty directory
-    └── 05_OUTCOMES/              # Empty directory
-```
-
-**METADATA.yml Content:**
-
-```yaml
-type: EVENT
-name: Cairo Visit
-date: 2026-05-22
-tags: []
-notes: ""
-subDirs:
-  - 01_AGENDA
-  - 02_MEDIA
-  - 03_NOTES
-  - 04_DOCUMENTS
-  - 05_OUTCOMES
-paricipants: []
-location: ""
-```
-
-### Configuration Maps Control Everything
-
-These maps in `internal/subject/types.go` define the directory and file structure:
-
-```go
-// What subdirectories are created for each subject type
-var SubDirs SubjectDirMap = SubjectDirMap{
-    SubjectEvent: {"01_AGENDA", "02_MEDIA", "03_NOTES", "04_DOCUMENTS", "05_OUTCOMES"},
-    SubjectTask: {"01_INPUTS", "02_WORKING", "03_REVIEW", "04_FINAL"},
-    // SubjectTopic and SubjectObjective have NO subdirectories
-}
-
-// What files are created for each subject type
-var Files SubjectFilesMap = SubjectFilesMap{
-    SubjectTopic: {"overview.md", "notes.md"},
-    SubjectObjective: {"definitions.md", "findings.md", "strategy.md"},
-    // SubjectEvent and SubjectTask have NO files
-}
+add/interactive → interactive form
+         ↓
+add/flags → populated Subject struct
+         ↓
+SubjectFactory → validate, generate name, create UUID
+         ↓
+WriteToDisk → create dirs, files, metadata
+         ↓
+edit → open METADATA.yml in editor → auto-sync
+         ↓
+find → search by term/type/UUID
+         ↓
+rename → update dir, metadata, cross-references
+         ↓
+archive → move to 99_ARCHIVE
 ```
 
 ---
 
-## Template System
+## UUID-Based Subject Identification
 
-### How Templates Work
+### Why UUIDs?
 
-Templates define the structure of a bootstrapped project. The workflow:
+1. **Stable Identity:** Subjects can be renamed; UUID never changes
+2. **Scriptable Operations:** Use `--uuid` flag to target subjects without interactive prompts
+3. **Bulk Operations:** Combine UUID discovery with bash/awk for pipeline automation
+4. **Portability:** UUID-based identity works across filesystem moves
 
-```
-1. User runs: operatree bootstrap myproject --template dev -d ~/projects
-2. CLI loads template: internal/template/Load("dev")
-3. Factory converts template to project structure: internal/project/Factory()
-4. Modules are recursively created: internal/module/Bootstrap()
-5. Project METADATA.yml is written
-```
+### UUID System
 
-### Template Structure
+- **Type:** v7 (sortable by timestamp)
+- **Persistence:** Written to METADATA.yml `uuid` field
+- **Generation:** Happens automatically during subject factory
 
-Templates are YAML files that define:
-
-- Module hierarchy
-- Nesting relationships (Tasks under ProjectManagement)
-- Default subdirectories for each module
-
-**Example template entry:**
+**Example YAML:**
 
 ```yaml
-name: dev
-description: Software development project template
-modules:
-  - type: ADMIN
-    name: ADMIN
-    subDirs: []
-  - type: PROJECT_MANAGEMENT
-    name: PROJECT_MANAGEMENT
-    subDirs: []
-    modules:  # ← Nested module
-      - type: TASKS
-        name: TASKS
-        subDirs: []
+uuid: a1b2c3d4-e5f6-7g8h-i9j0-k1l2m3n4o5p6
+type: EVENT
+name: 2026-05-22-cairo-visit
+date: "2026-05-22"
+location: Cairo
 ```
 
-### Available Templates
+### Scripted Operations with UUIDs
 
-- **general** — Minimal structure, good starting point
-- **dev** — Software development projects
-- **consulting** — Client engagement work
-- **research** — Academic and R&D projects
+**Example: Rename subject by UUID without interactive prompt**
+
+```bash
+operatree rename --uuid a1b2c3d4-e5f6-7g8h-i9j0-k1l2m3n4o5p6 --new-name "New Name"
+```
+
+**Example: Archive all done tasks via pipeline**
+
+```bash
+operatree find --term done --type task --plain \
+  | grep uuid \
+  | awk '{print $2}' \
+  | xargs -I{} operatree archive --uuid {}
+```
+
+---
+
+## Non-Interactive Mode & Scripting
+
+### Two Modes of Operation
+
+#### Interactive Mode
+- User sees prompts
+- Finds subjects via fuzzy search
+- Ideal for daily interactive use
+- Example: `operatree add event`
+
+#### Non-Interactive Mode
+- Controlled by flags
+- No prompts or finders
+- Ideal for scripts, cron jobs, pipelines
+- Example: `operatree add event --name "Cairo Visit" --date 2026-05-22`
+
+### Subject Creation with Flags
+
+All flags are available for non-interactive subject creation:
+
+**Common Flags (all types):**
+```bash
+--name          Subject name
+--date          Date
+--notes         Notes
+--tags          Comma-delimited tags
+```
+
+**Event-Specific:**
+```bash
+--location      Location
+--participants  Comma-delimited participant names
+```
+
+**Task-Specific:**
+```bash
+--owner              Person responsible
+--status             Status (e.g., "active", "blocked", "done")
+--related-events     Comma-delimited related event names
+--outputs            Comma-delimited output names
+```
+
+**Topic-Specific:**
+```bash
+--related-objective  Related objective name
+```
+
+**DataSource-Specific:**
+```bash
+--source             Data origin (e.g., "Kaggle", "Internal API")
+--source-link        URL or path to data
+--source-objective   Related objective
+--source-datasize    Dataset size/volume
+```
+
+**Examples:**
+
+```bash
+# Non-interactive event creation
+operatree add event \
+  --name "Cairo Factory Visit" \
+  --date 2026-06-01 \
+  --location Cairo \
+  --participants "Alex,Sara,Omar" \
+  --tags "factory,inspection" \
+  --notes "Production line assessment"
+
+# Non-interactive task creation
+operatree add task \
+  --name "Prepare Report" \
+  --date 2026-06-01 \
+  --owner Alex \
+  --status active \
+  --related-events "Cairo Factory Visit" \
+  --outputs "Report v1.0" \
+  --tags "report"
+```
+
+### Metadata Auto-Sync After Edit
+
+When a user edits metadata via `operatree edit`:
+
+1. File opens in editor
+2. User makes changes and saves
+3. Editor closes
+4. OperaTree automatically runs `sync` (no user action needed)
+5. Project metadata index is updated
+
+**Before:** Manual `operatree sync` was required
+**Now:** Automatic, reducing friction
 
 ---
 
 ## Adding New Features
 
-### Scenario 1: Add a New Subject Type
+### Adding a New Subject Type
 
-**Complete step-by-step guide:**
+To add a new subject type (e.g., "REPORT"):
 
-**Step 1: Define Subject Type** (`internal/subject/types.go`):
-
-```go
-const SubjectMeeting SubjectType = "MEETING"
-```
-
-**Step 2: Add Configuration Maps** (`internal/subject/types.go`):
+**Step 1:** Add constant in `pkg/subject/types.go`
 
 ```go
-var SubDirs SubjectDirMap = SubjectDirMap{
-    // ... existing ...
-    SubjectMeeting: {
-        "01_AGENDA",
-        "02_MOM",           // Minutes of Meeting
-        "03_ATTENDEES",
-    },
-}
-
-var Files SubjectFilesMap = SubjectFilesMap{
-    // ... existing ...
-    SubjectMeeting: {
-        "notes.md",
-    },
-}
+const SubjectReport SubjectType = "REPORT"
 ```
 
-**Step 3: Add Module Mapping** (`internal/project/types.go`):
+**Step 2:** Add to `SubjectModuleMap` in `pkg/project/types.go`
 
 ```go
 var SubjectModuleMap = map[subject.SubjectType]module.ModuleType{
-    subject.SubjectEvent:     module.ModuleEvents,
-    subject.SubjectTask:      module.ModuleTasks,
-    subject.SubjectTopic:     module.ModuleTopics,
-    subject.SubjectObjective: module.ModuleObjectives,
-    subject.SubjectMeeting:   module.ModuleEvents,  // Store in Events module
+    // ... existing entries ...
+    subject.SubjectReport: module.ModuleReports,  // Module must exist
 }
 ```
 
-**That's it!** The CLI will automatically recognize the new subject type because `cmd/new.go` dynamically loads from `project.SubjectModuleMap`. No changes needed to the `new` command!
-
-**Step 4: Optional - Add Interactive Mode** (`internal/subject/interactive.go`):
-
-If you want interactive prompts for the new type:
+**Step 3:** Add module constant in `pkg/module/types.go`
 
 ```go
-if st == SubjectMeeting {
-    var agenda string
-    var attendees string
-    
-    err := huh.NewForm(
-        huh.NewGroup(
-            huh.NewText().Title("Agenda").Value(&agenda),
-            huh.NewText().Title("Attendees").Value(&attendees),
-        ),
-    ).Run()
-    if err != nil { return err }
-    
-    s.Agenda = agenda
-    s.Attendees = attendees
-}
+const ModuleReports ModuleType = "REPORTS"
 ```
 
-**Step 5: Update Subject Struct** (`internal/subject/types.go`):
-
-If you added type-specific fields in interactive mode, add them to `Subject` struct:
+**Step 4:** Add prefix mapping in `pkg/module/types.go`
 
 ```go
-type Subject struct {
-    // ... existing fields ...
-    Agenda    string   `yaml:"agenda,omitempty"`
-    Attendees []string `yaml:"attendees,omitempty"`
-}
+ModuleDirPrefixMap[ModuleReports] = "08"  // Or appropriate prefix
 ```
 
-**Step 6: Update Project Templates** (if needed):
+**Step 5:** (Optional) Configure default dirs/files in `pkg/subject/types.go`
 
-Add the new subject's module to templates if appropriate.
+```go
+SubDirs[SubjectReport] = []string{...}
+Files[SubjectReport] = []string{...}
+```
 
-**Test it:**
+**That's it!** The CLI command automatically recognizes the new type:
 
 ```bash
-operatree new meeting --name "Q2 Planning" --date "2026-06-01"
+operatree add report --name "Q2 Results" --date 2026-06-30
+# Works immediately without changes to cmd/add.go!
 ```
-
----
-
-### Scenario 2: Add a New Command
-
-**Steps:**
-
-1. **Create Command File** (`cmd/mycommand.go`):
-
-```go
-package cmd
-
-import (
-    "log"
-    "github.com/hanymamdouh82/operatree/internal/project"
-    "github.com/spf13/cobra"
-)
-
-func init() {
-    myCmd.Flags().StringVarP(&destDir, "dest", "d", actDir, dFlagHelp_project)
-    myCmd.PreRun = resolveProjectDir
-    rootCmd.AddCommand(myCmd)
-}
-
-var myCmd = &cobra.Command{
-    Use:   "mycommand [args]",
-    Short: "Short description",
-    Long:  "Longer description of what this command does",
-    Args:  cobra.ExactArgs(0),
-    Run:   runMyCommand,
-}
-
-func runMyCommand(cmd *cobra.Command, args []string) {
-    // 1. Load project
-    p, err := project.Load(actDir)
-    if err != nil { log.Fatal(err) }
-
-    // 2. Call business logic
-    if err := project.MyFunction(&p); err != nil {
-        log.Fatal(err)
-    }
-}
-```
-
-2. **Add Business Logic** (`internal/project/myfunction.go`):
-
-```go
-package project
-
-func MyFunction(p *Project) error {
-    // Implementation
-    return nil
-}
-```
-
-3. **Test it:**
-
-```bash
-operatree mycommand
-```
-
----
-
-### Scenario 3: Enhance Search
-
-**Location:** `internal/project/find_subjects.go`
-
-Current search uses fuzzy matching via `github.com/lithammer/fuzzysearch`.
-
-To enhance:
-
-1. Add searchable fields to the concatenated string
-2. Implement ranking/scoring logic
-3. Support advanced query syntax
 
 ---
 
 ## Common Patterns
 
-### Pattern 1: Loading & Error Handling
+### Pattern 1: Resolve Project + Load + Operate
 
 ```go
-// Always load project first
-p, err := project.Load(projectDir)
-if err != nil {
-    return fmt.Errorf("failed to load project: %w", err)
-}
-
-// Work with project
-if err := project.NewSubject(&p, name, date, subjectType); err != nil {
-    return fmt.Errorf("failed to create subject: %w", err)
-}
-```
-
-### Pattern 2: Recursive Module Traversal
-
-```go
-// For operations on nested modules
-func processModule(m *module.Module) error {
-    // Process subjects at this level
-    for _, s := range m.Subjects {
-        if err := processSubject(s); err != nil {
-            return err
-        }
+// In cmd handler
+func myCommand(cmd *cobra.Command, args []string) {
+    // 1. Project already resolved by PreRun hook
+    
+    // 2. Load project (hydrates paths)
+    p, err := project.Load(actDir)
+    if err != nil { log.Fatal(err) }
+    
+    // 3. Operate on project
+    if err := project.SomeOperation(&p, args); err != nil {
+        log.Fatal(err)
     }
+}
+```
 
-    // Recurse into submodules
-    for i := range m.Modules {
-        if err := processModule(&m.Modules[i]); err != nil {
-            return err
+### Pattern 2: Find Subject → Operate → Update Metadata
+
+```go
+// In pkg/project or cmd
+func OperateOnSubject(p *project.Project, searchTerm string) error {
+    // 1. Find subject
+    s, err := project.FindSubject(p, "", searchTerm)
+    if err != nil { return err }
+    
+    // 2. Operate on subject
+    s.DoSomething()
+    
+    // 3. Update project metadata
+    return p.WriteMetadata()
+}
+```
+
+### Pattern 3: Walk All Subjects Recursively
+
+```go
+func walkSubjects(modules []module.Module, callback func(*subject.Subject)) {
+    for i, m := range modules {
+        // Process subjects at this level
+        for j := range m.Subjects {
+            callback(&modules[i].Subjects[j])
         }
+        
+        // Recurse into nested modules
+        walkSubjects(m.Modules, callback)
     }
-
-    return nil
-}
-```
-
-### Pattern 3: Pointer Safety in Loops
-
-```go
-// When you need pointers to slice elements
-for i := range modules {
-    ptr := &modules[i]  // Pointer to actual slice element
-    ptr.Subjects = append(ptr.Subjects, newSubject)  // Persists to slice
-}
-```
-
-### Pattern 4: Defensive Map Access
-
-```go
-// Always check if key exists
-val, exists := SubjectModuleMap[subjectType]
-if !exists {
-    return fmt.Errorf("unsupported subject type: %s", string(subjectType))
-}
-```
-
-### Pattern 5: Non-Fatal Errors
-
-```go
-// Some operations should not block others
-if err := activitylog.Log(...); err != nil {
-    fmt.Fprintf(os.Stderr, "warning: could not write activity log: %v\n", err)
-    // Continue, don't return
 }
 ```
 
@@ -1452,170 +1138,83 @@ if err := activitylog.Log(...); err != nil {
 ```
 operatree/
 ├── cmd/
-│   └── *_test.go          # Command handler tests
-├── internal/
-│   ├── project/
-│   │   └── *_test.go      # Business logic tests
-│   ├── subject/
-│   │   └── *_test.go      # Subject factory tests
+│   ├── find_test.go
+│   ├── add_test.go
 │   └── ...
-└── testdata/              # Test fixtures, example projects
+├── pkg/
+│   ├── project/
+│   │   ├── bootstrap_test.go
+│   │   ├── find_test.go
+│   │   └── ...
+│   ├── subject/
+│   │   ├── factory_test.go
+│   │   └── ...
+│   └── ...
+├── internal/
+│   ├── filesystem/
+│   │   └── filesystem_test.go
+│   └── ...
 ```
 
 ### Test Patterns
 
-**1. Unit Tests (Logic)**
+**Unit Tests:** Test individual functions with mocked dependencies
 
 ```go
-func TestNewSubject(t *testing.T) {
-    // Arrange
-    p := createTestProject()
-
-    // Act
-    err := project.NewSubject(&p, "Test", "2026-05-22", subject.SubjectEvent)
-
-    // Assert
-    if err != nil {
-        t.Fatalf("unexpected error: %v", err)
-    }
-
-    if len(p.Modules[0].Subjects) != 1 {
-        t.Errorf("expected 1 subject, got %d", len(p.Modules[0].Subjects))
+func TestFindSubject_Fuzzy(t *testing.T) {
+    p := &project.Project{...}
+    s, err := project.FindSubject(p, "event", "cairo")
+    if err != nil { t.Fatal(err) }
+    if s.Name != "cairo-visit" {
+        t.Errorf("expected cairo-visit, got %s", s.Name)
     }
 }
-```
-
-**2. Integration Tests (Filesystem)**
-
-```go
-func TestProjectBootstrap(t *testing.T) {
-    // Create temp directory
-    tmpDir := t.TempDir()
-
-    // Bootstrap project
-    p, err := project.Bootstrap("test", tmpDir, "dev")
-    if err != nil {
-        t.Fatalf("failed to bootstrap: %v", err)
-    }
-
-    // Verify files exist
-    metadata := path.Join(p.ProjectDir(), project.METADATA_FILE)
-    if _, err := os.Stat(metadata); err != nil {
-        t.Errorf("metadata file not found: %v", err)
-    }
-}
-```
-
-### Running Tests
-
-```bash
-# Run all tests
-go test ./...
-
-# Run specific package
-go test ./internal/project
-
-# Run with coverage
-go test -cover ./...
-
-# Verbose output
-go test -v ./...
 ```
 
 ---
 
 ## Troubleshooting Guide
 
-### Issue: "Unsupported subject type"
+### Common Issues
 
-**Cause:** Subject type not defined or not registered
+**Issue:** "Module not found in project"
+- **Check:** Is the module template included in the project?
+- **Check:** Has the project been bootstrapped?
+- **Fix:** Re-run project bootstrap or check template
 
-**Debug:**
+**Issue:** "Cannot find directory"
+- **Check:** Are paths being hydrated correctly?
+- **Check:** Is the project loaded before use?
+- **Fix:** Ensure `project.Load()` is called
 
-1. Check CLI accepts it: `operatree new --help`
-2. Verify constant in `internal/subject/types.go`
-3. Verify mapping in `internal/project/types.go`
-
-**Fix:**
-
-- Add subject type definition (Step 1 from Scenario 1)
-- Add to SubjectModuleMap (Step 3 from Scenario 1)
-- CLI will automatically pick it up!
-
----
-
-### Issue: "Module type X not found"
-
-**Cause:** Module missing from project structure or not mapped
-
-**Debug:**
-
-1. Check project template: `operatree show templates`
-2. Verify module in template YAML
-3. Verify `SubjectModuleMap` has entry
-
-**Fix:**
-
-- Update template file
-- Or manually add module directory to project
+**Issue:** "Metadata out of sync"
+- **Check:** Were METADATA.yml files edited outside of OperaTree?
+- **Check:** Did files arrive via git pull or Syncthing?
+- **Fix:** Run `operatree sync` to rebuild index
 
 ---
 
-### Issue: "Subject already exists"
+## Key Data Structures
 
-**Cause:** Directory name collision
+### Project Metadata (METADATA.yml)
 
-**Debug:**
-
-1. List subjects: `ls -la module-dir/`
-2. Check name factory logic
-
-**Fix:**
-
-- Use different subject name to get different directory name
-
----
-
-### Issue: "Metadata sync fails"
-
-**Cause:** Malformed YAML in subject METADATA.yml
-
-**Debug:**
-
-1. Check file: `cat subject-dir/METADATA.yml`
-2. Validate YAML: `yamllint subject-dir/METADATA.yml`
-
-**Fix:**
-
-- Fix YAML syntax in metadata file
-- Run `operatree sync` to rebuild index
+```yaml
+name: fleetfix
+template: consulting
+modules:
+  - type: EVENTS
+    name: 01_EVENTS
+    modules: []
+    subjects:
+      - uuid: a1b2c3d4-e5f6-7g8h-i9j0-k1l2m3n4o5p6
+        type: EVENT
+        name: 2026-05-22-cairo-visit
+        date: "2026-05-22"
+        location: Cairo
+        tags: [factory, inspection]
+        subDirs: [01_AGENDA, 02_MEDIA, 03_NOTES, 04_DOCUMENTS, 05_OUTCOMES]
+```
 
 ---
 
-### Issue: "Config file not found"
-
-**Cause:** First run, no config yet
-
-**Debug:**
-
-1. Check config location: `echo $XDG_CONFIG_HOME` (Linux)
-2. Run: `operatree show config`
-
-**Fix:**
-
-- Run `operatree bootstrap` to create first project
-- Config is automatically created on first project creation
-
----
-
-### Issue: Paths break after moving project
-
-**Expected:** Paths should NOT break
-
-If they do, it's a bug. Projects should be fully portable.
-
-**Verify:**
-
-- Use `-d` with new location: `operatree show -d /new/location`
-- No config changes should be needed
-- If this fails, file an issue
+**This document is the source of truth for OperaTree architecture. Keep it updated as the codebase evolves!**
