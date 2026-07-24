@@ -70,6 +70,7 @@ func NewSubject(p *Project, cliSubject subject.Subject, st subject.SubjectType) 
 
 	// Confirm creation to user
 	fmt.Printf("%s created: %s\n", string(st), s.Name)
+	fmt.Printf("%s path: %s\n", string(st), s.DirName)
 
 	// Log the action for audit trail
 	if err := activitylog.Log(
