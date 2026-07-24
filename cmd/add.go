@@ -16,6 +16,7 @@ var validSubjects []cobra.Completion
 var addCmd = &cobra.Command{}
 
 var ns subject.Subject
+var outJson bool
 
 func init() {
 	// build completion slice from available subjects dynamically
@@ -71,6 +72,7 @@ Examples:
 	addCmd.Flags().StringVar(&ns.SourceLink, "source-link", "", "datasource URL or path to source data")
 	addCmd.Flags().StringVar(&ns.SourceObjective, "source-objective", "", "datasource related objective")
 	addCmd.Flags().StringVar(&ns.SourceDataSize, "source-datasize", "", "datasource size or volume")
+	addCmd.Flags().BoolVarP(&outJson, "json", "j", false, "output json")
 
 	addCmd.PreRun = resolveProjectDir
 	rootCmd.AddCommand(addCmd)
@@ -91,7 +93,7 @@ func newSubject(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	if err := project.NewSubject(&p, ns, subject.SubjectType(st)); err != nil {
+	if err := project.NewSubject(&p, ns, subject.SubjectType(st), outJson); err != nil {
 		log.Fatal(err)
 	}
 }

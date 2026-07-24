@@ -110,6 +110,8 @@ func showResult(s subject.Subject, isPlain bool) error {
 		return nil
 	}
 
+	fmt.Printf("path: %s\n", s.DirName)
+
 	b, err := yaml.Marshal(s)
 	if err != nil {
 		return err

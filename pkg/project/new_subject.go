@@ -1,6 +1,7 @@
 package project
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -14,7 +15,7 @@ import (
 //   - subjectName: name of the subject
 //   - subjectDate: date associated with the subject
 //   - st: subject type (Event, Task, Topic, or Objective)
-func NewSubject(p *Project, cliSubject subject.Subject, st subject.SubjectType) error {
+func NewSubject(p *Project, cliSubject subject.Subject, st subject.SubjectType, outJson bool) error {
 	ss := ListSubjects(p, "")
 
 	// Validate subject type and get corresponding module type
@@ -55,8 +56,6 @@ func NewSubject(p *Project, cliSubject subject.Subject, st subject.SubjectType) 
 		return err
 	}
 
-	fmt.Printf("uuid: %s\n", s.UUID)
-
 	// Persist subject to filesystem
 	if err := s.WriteToDisk(); err != nil {
 		return err
@@ -68,10 +67,6 @@ func NewSubject(p *Project, cliSubject subject.Subject, st subject.SubjectType) 
 		return err
 	}
 
-	// Confirm creation to user
-	fmt.Printf("%s created: %s\n", string(st), s.Name)
-	fmt.Printf("%s path: %s\n", string(st), s.DirName)
-
 	// Log the action for audit trail
 	if err := activitylog.Log(
 		p.ProjectDir(),
@@ -81,6 +76,16 @@ func NewSubject(p *Project, cliSubject subject.Subject, st subject.SubjectType) 
 	); err != nil {
 		fmt.Fprintf(os.Stderr, "warning: could not write activity log: %v\n", err)
 	}
+
+	if outJson {
+		j, _ := json.MarshalIndent(s, "", "  ")
+		fmt.Printf("%s\n", j)
+		return nil
+	}
+	// Confirm creation to user
+	fmt.Printf("uuid: %s\n", s.UUID)
+	fmt.Printf("%s created: %s\n", string(st), s.Name)
+	fmt.Printf("%s path: %s\n", string(st), s.DirName)
 
 	return nil
 }
