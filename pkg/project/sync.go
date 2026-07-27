@@ -57,8 +57,7 @@ func syncModule(m *module.Module) (bool, error) {
 			continue
 		}
 
-		// Preserve runtime-only (yaml:"-") fields that are set during
-		// hydration and never persisted to disk.
+		
 		diskMeta.DirName = s.DirName
 		diskMeta.Files = s.Files
 
@@ -66,7 +65,7 @@ func syncModule(m *module.Module) (bool, error) {
 		dirty = true
 	}
 
-	// Recurse into sub-modules
+	
 	for i := range m.Modules {
 		changed, err := syncModule(&m.Modules[i])
 		if err != nil {
