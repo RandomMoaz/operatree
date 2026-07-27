@@ -1,6 +1,8 @@
 package project
 
 import (
+	"errors"
+	"io/fs"
 	"log"
 	"path/filepath"
 
@@ -11,43 +13,67 @@ import (
 )
 
 // Sync walks the full project tree and updates each subject in memory
-// from its metadata file on disk, then writes the project metadata file.
+// from its metadata file on disk, then writes the project metadata file
+// only if something actually changed on disk.
 func Sync(p *Project) error {
+	dirty := false
 	for i := range p.Modules {
-		if err := syncModule(&p.Modules[i]); err != nil {
+		changed, err := syncModule(&p.Modules[i])
+		if err != nil {
 			return err
 		}
+		dirty = dirty || changed
+	}
+
+	if !dirty {
+		return nil
 	}
 
 	return p.WriteMetadata()
 }
 
-func syncModule(m *module.Module) error {
+func syncModule(m *module.Module) (bool, error) {
+	dirty := false
+
 	// Sync subjects at this level
-	for j, s := range m.Subjects {
+	for j := range m.Subjects {
+		s := m.Subjects[j]
 		b, err := filesystem.ReadFile(filepath.Join(s.DirName, subject.METADATA_FILE))
 		if err != nil {
-			// subject file missing or unreadable — skip, don't abort
-			log.Printf("missing yml for subject %s\n", s.DirName)
+			if errors.Is(err, fs.ErrNotExist) {
+				// subject file genuinely missing — skip, don't abort
+				log.Printf("missing yml for subject %s\n", s.DirName)
+			} else {
+				// real read error (permissions, I/O) — skip but surface it
+				log.Printf("cannot read yml for subject %s: %v\n", s.DirName, err)
+			}
 			continue
 		}
 
 		var diskMeta subject.Subject
 		if err := yaml.Unmarshal(b, &diskMeta); err != nil {
 			// malformed yaml — skip, don't abort
-			log.Printf("malformed yml for subject %s\n", s.DirName)
+			log.Printf("malformed yml for subject %s: %v\n", s.DirName, err)
 			continue
 		}
 
+		// Preserve runtime-only (yaml:"-") fields that are set during
+		// hydration and never persisted to disk.
+		diskMeta.DirName = s.DirName
+		diskMeta.Files = s.Files
+
 		m.Subjects[j] = diskMeta
+		dirty = true
 	}
 
 	// Recurse into sub-modules
 	for i := range m.Modules {
-		if err := syncModule(&m.Modules[i]); err != nil {
-			return err
+		changed, err := syncModule(&m.Modules[i])
+		if err != nil {
+			return dirty, err
 		}
+		dirty = dirty || changed
 	}
 
-	return nil
+	return dirty, nil
 }
